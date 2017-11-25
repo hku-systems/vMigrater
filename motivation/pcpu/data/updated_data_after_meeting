@@ -1,0 +1,56 @@
+wwjia@wwjia-PowerEdge-R430:~/workshop/bcc/vMigrater/motivation/pcpu > ./pcpu.sh 
+memsize is 67312353280
+count is 16433680
+./pcpu.sh: line 4: 32671 Killed                  ./bin/flush
+CPU number is 12
+Process ID number is 32676
+I/O process ID number is 32676
+I/O thread on PCPU 11
+Sequential reading 8.000000 GB needs 15920585 microseconds.
+Sequential read 8.000000 GB, I/O throughput is 514.553956 MB/s.
+memsize is 67312353280
+count is 16433680
+./pcpu.sh: line 6: 32679 Killed                  ./bin/flush
+CPU number is 12
+Process ID number is 32680
+I/O process ID number is 32680
+I/O thread on PCPU 11
+Sequential reading 8.000000 GB needs 15923311 microseconds.
+Sequential read 8.000000 GB, I/O throughput is 514.465867 MB/s.
+memsize is 67312353280
+count is 16433680
+./pcpu.sh: line 8: 32684 Killed                  ./bin/flush
+CPU number is 12
+Process ID number is 32685
+I/O process ID number is 32685
+I/O thread on PCPU 11
+Sequential reading 8.000000 GB needs 15902183 microseconds.
+Sequential read 8.000000 GB, I/O throughput is 515.149398 MB/s.
+memsize is 67312353280
+count is 16433680
+./pcpu.sh: line 12: 32686 Killed                  ./bin/flush
+CPU number is 12
+Process ID number is 32688
+I/O process ID number is 32688
+I/O thread on PCPU 11
+Sequential reading 8.000000 GB needs 117465199 microseconds.
+Sequential read 8.000000 GB, I/O throughput is 69.739804 MB/s.
+memsize is 67312353280
+count is 16433680
+./pcpu.sh: line 14: 32691 Killed                  ./bin/flush
+CPU number is 12
+Process ID number is 32693
+I/O process ID number is 32693
+I/O thread on PCPU 11
+Sequential reading 8.000000 GB needs 118444595 microseconds.
+Sequential read 8.000000 GB, I/O throughput is 69.163139 MB/s.
+memsize is 67312353280
+count is 16433680
+./pcpu.sh: line 16: 32698 Killed                  ./bin/flush
+CPU number is 12
+Process ID number is 32701
+I/O process ID number is 32701
+I/O thread on PCPU 11
+Sequential reading 8.000000 GB needs 118348307 microseconds.
+Sequential read 8.000000 GB, I/O throughput is 69.219410 MB/s.
+

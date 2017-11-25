@@ -1,0 +1,36 @@
+CPU number is 9
+Process ID number is 1852
+I/O process ID number is 1852
+I/O thread on VCPU 3
+Sequential reading 8.000000 GB needs 30998670 microseconds.
+Sequential read 8.000000 GB, I/O throughput is 264.269403 MB/s.
+CPU number is 9
+Process ID number is 1875
+I/O process ID number is 1875
+I/O thread on VCPU 3
+Sequential reading 8.000000 GB needs 30982454 microseconds.
+Sequential read 8.000000 GB, I/O throughput is 264.407719 MB/s.
+CPU number is 9
+Process ID number is 1894
+I/O process ID number is 1894
+I/O thread on VCPU 3
+Sequential reading 8.000000 GB needs 30982582 microseconds.
+Sequential read 8.000000 GB, I/O throughput is 264.406627 MB/s.
+CPU number is 9
+Process ID number is 1936
+I/O process ID number is 1936
+I/O thread on VCPU 3
+Sequential reading 8.000000 GB needs 338676827 microseconds.
+Sequential read 8.000000 GB, I/O throughput is 24.188251 MB/s.
+CPU number is 9
+Process ID number is 1973
+I/O process ID number is 1973
+I/O thread on VCPU 3
+Sequential reading 8.000000 GB needs 339709241 microseconds.
+Sequential read 8.000000 GB, I/O throughput is 24.114740 MB/s.
+CPU number is 9
+Process ID number is 2022
+I/O process ID number is 2022
+I/O thread on VCPU 3
+Sequential reading 8.000000 GB needs 338180881 microseconds.
+Sequential read 8.000000 GB, I/O throughput is 24.223723 MB/s.
