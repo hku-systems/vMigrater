@@ -1,7 +1,9 @@
 #!/bin/bash
 
 #create build dir
-mkdir build
+if [ ! -d "./build" ]; then
+	mkdir build
+fi
 
 #core part
 gcc main.c debug.c -o ./build/main -lpthread -lglib-2.0
