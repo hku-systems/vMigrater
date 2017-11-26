@@ -160,6 +160,7 @@ char *shm;
 struct shared_mem *sm;
 pid_t pid;
 uint64_t io_vn = 0;
+uint64_t think_time = 0;
 
 sem_t sem_main;
 sem_t sem_worker;
@@ -281,7 +282,7 @@ void do_iofunc(void) {
 
 	uint64_t _start;
 	uint64_t _diff;
-	int64_t think_time = 0;
+	uint64_t _think_time = 0;
 	//rt.pid = syscall(SYS_gettid);
 
 	//set_nice_priority(-20, rt.pid);
@@ -322,10 +323,10 @@ void do_iofunc(void) {
 		//}
 
 #if 1
-		while (think_time != 4000) {
-			think_time += 1;
+		while (_think_time != 4000) {
+			_think_time += 1;
 		}
-		think_time = 0;
+		_think_time = 0;
 #endif
 
 		//i = i - EACH_SIZE;
@@ -385,8 +386,10 @@ int main(int argc, char **argv) {
 
 	//printf("vCPU number is %lu\n", _vcpu_num);
 	io_vn = (uint64_t) atoi(argv[1]);
+	//think_time = (uint64_t) atoi(argv[2]);
 	printf("Process ID number is %d\n", pid);
 	printf("io_vn is %lu\n", io_vn);
+	//printf("think_time is %lu\n", think_time);
 	//init_shared_mem();
 	init_io_thread();
 

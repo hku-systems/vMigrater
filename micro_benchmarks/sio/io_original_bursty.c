@@ -159,6 +159,7 @@ int shmid;
 char *shm;                                                              
 struct shared_mem *sm;
 pid_t pid;
+uint64_t io_vn = 0;
 
 sem_t sem_main;
 sem_t sem_worker;
@@ -269,7 +270,6 @@ void do_iofunc(void) {
 	uint64_t diff;
 	uint64_t diff1;
 	uint64_t len = 0;
-	uint64_t io_vn = 0;
 	uint64_t _io_vn = 0;
 	uint64_t vn;
 	uint64_t counter = 0;
@@ -290,14 +290,14 @@ void do_iofunc(void) {
 	//XXX Must set since the I/O thread would be pinned to that vCPU.
 	//j = 0;
 	//set_priority();
-	set_pid_affinity(2, pid);
+	set_pid_affinity(io_vn, pid);
 	j = 2;
-	io_vn = 0;
+	//io_vn = 0;
 	uint64_t _i = 0;
 
 	memset(buf, '\0', EACH_SIZE + 1);
-	io_vn = get_pid_affinity(pid);
-	printf("I/O thread on vCPU %lu\n", io_vn);
+	_io_vn = get_pid_affinity(pid);
+	printf("I/O thread on vCPU %lu\n", _io_vn);
 	vn = io_vn;
 	uint64_t mcounter = 0;
 	uint64_t _mcounter = 0;
@@ -382,13 +382,15 @@ void init_shared_mem(void) {
 int main(int argc, char **argv) {
 	pid = getpid();
 	uint64_t vcpu_num = get_vcpu_count();
-	__vcpu_num = vcpu_num;
-	vcpu_num = 4;
-	_vcpu_num = vcpu_num;
+	//__vcpu_num = vcpu_num;
+	//vcpu_num = 4;
+	//_vcpu_num = vcpu_num;
 	int i = 0;
 
-	printf("vCPU number is %lu\n", _vcpu_num);
+	io_vn = (uint64_t) atoi(argv[1]);
+	//printf("vCPU number is %lu\n", _vcpu_num);
 	printf("Process ID number is %d\n", pid);
+	printf("io_vn is %lu\n", io_vn);
 	//init_shared_mem();
 	init_io_thread();
 
