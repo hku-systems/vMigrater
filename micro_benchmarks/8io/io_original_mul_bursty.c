@@ -10,7 +10,7 @@
  *
  */
 #define _GNU_SOURCE
-#define TEST_TIO_MIGRATION
+//#define TEST_TIO_MIGRATION
 #define MY_DEBUG_CPU_
 #include <sys/signalfd.h>
 #include <signal.h>
@@ -54,7 +54,7 @@
 #define CPU_DEBUG4		"D_CPU_4"
 #define FNA				"/home/kvm1/sda2/testA"
 #define FNB				"/home/kvm1/sda3/testB"
-#define F_SIZE			(1ULL<<30ULL)
+#define F_SIZE			(1ULL<<25ULL)
 //#define F_SIZE			(1ULL<<27ULL)
 #define EACH_SIZE		(1ULL<<12ULL)
 #define MAX_NUM_IO		(1000ULL)
@@ -180,6 +180,14 @@ int shmid;
 char *shm;                                                              
 struct shared_mem *sm;
 //pid_t pid;
+uint64_t io_vn1 = 0;
+uint64_t io_vn2 = 0;
+uint64_t io_vn3 = 0;
+uint64_t io_vn4 = 0;
+uint64_t io_vn5 = 0;
+uint64_t io_vn6 = 0;
+uint64_t io_vn7 = 0;
+uint64_t io_vn8 = 0;
 
 sem_t sem_main;
 sem_t sem_worker;
@@ -299,13 +307,12 @@ void *do_iofunc(void *arg) {
 	uint64_t flag = 0;
 	uint64_t s;
 	int pid;
-
+	uint64_t bursty = 0;
 
 	uint64_t _start;
 	uint64_t _diff;
 	int64_t think_time = 0;
 	uint64_t index;
-	uint64_t bursty = 0;
 	if (_wj->num == 0) {
 		i = 0;
 	} else if (_wj->num == 1) {
@@ -377,8 +384,8 @@ void *do_iofunc(void *arg) {
 
 #if 1
 		//sm->total_bytes += EACH_SIZE;
-		if (bursty == 200 * EACH_SIZE) {
-			while (think_time != 8000000) { // 20 ms
+		if (bursty == 100 * EACH_SIZE) {
+			while (think_time != 8000000) {
 				think_time += 1;
 			}
 			think_time = 0;
@@ -389,7 +396,7 @@ void *do_iofunc(void *arg) {
 		//i = i - EACH_SIZE;
 		i = i + EACH_SIZE;
 		_i = _i + EACH_SIZE;
-		bursty = bursty + EACH_SIZE;
+		bursty += EACH_SIZE;
 		memset(buf, '\0', EACH_SIZE + 1);
 	}
 	diff = debug_time_monotonic_usec() - start;
@@ -425,7 +432,15 @@ void init_io_thread(void) {
 	p = (pthread_t *) malloc(sizeof(pthread_t) * NUM_IO_THREADS);
 	if (p == NULL) handle_error("malloc error!");
 	for (i = 0; i < NUM_IO_THREADS; i++) {
-		wj[i].vcpu = start_vcpu + i;
+		//wj[i].vcpu = start_vcpu + i;
+		if (i == 0) wj[i].vcpu = io_vn1;
+		else if (i == 1) wj[i].vcpu = io_vn2;
+		else if (i == 2) wj[i].vcpu = io_vn3;
+		else if (i == 3) wj[i].vcpu = io_vn4;
+		else if (i == 4) wj[i].vcpu = io_vn5;
+		else if (i == 5) wj[i].vcpu = io_vn6;
+		else if (i == 6) wj[i].vcpu = io_vn7;
+		else if (i == 7) wj[i].vcpu = io_vn8;
 		wj[i].len = 0;
 		wj[i].offset = 0;
 		wj[i].num = i;
@@ -463,7 +478,17 @@ int main(int argc, char **argv) {
 	_vcpu_num = vcpu_num;
 	uint64_t i = 0;
 
+	io_vn1 = (uint64_t) atoi(argv[1]);
+	io_vn2 = (uint64_t) atoi(argv[2]);
+	io_vn3 = (uint64_t) atoi(argv[3]);
+	io_vn4 = (uint64_t) atoi(argv[4]);
+	io_vn5 = (uint64_t) atoi(argv[5]);
+	io_vn6 = (uint64_t) atoi(argv[6]);
+	io_vn7 = (uint64_t) atoi(argv[7]);
+	io_vn8 = (uint64_t) atoi(argv[8]);
 	printf("vCPU number is %lu\n", _vcpu_num);
+	printf("io_vn1/2/3/4 are %lu/%lu/%lu/%lu\n", io_vn1, io_vn2, io_vn3, io_vn4);
+	printf("io_vn5/6/7/8 are %lu/%lu/%lu/%lu\n", io_vn5, io_vn6, io_vn7, io_vn8);
 	//printf("Process ID number is %d\n", pid);
 	//init_shared_mem();
 	init_io_thread();

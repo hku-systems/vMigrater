@@ -10,7 +10,7 @@
  *
  */
 #define _GNU_SOURCE
-#define TEST_TIO_MIGRATION
+//#define TEST_TIO_MIGRATION
 #define MY_DEBUG_CPU_
 #include <sys/signalfd.h>
 #include <signal.h>
@@ -178,6 +178,8 @@ int shmid;
 char *shm;                                                              
 struct shared_mem *sm;
 //pid_t pid;
+uint64_t io_vn1 = 0;
+uint64_t io_vn2 = 0;
 
 sem_t sem_main;
 sem_t sem_worker;
@@ -348,7 +350,6 @@ void *do_iofunc(void *arg) {
 	//i = F_SIZE - EACH_SIZE;
 	while (i != F_SIZE) {
 	//while (i > 0) {
-		//_start = debug_time_monotonic_usec();
 		//set_affinity(j);
 		//j = j + 1;
 		//if (j == 11) j = 2;
@@ -359,8 +360,6 @@ void *do_iofunc(void *arg) {
 		}
 		//printf("i in thread %d is %lu\n", _wj->num, i);
 
-		//_diff = debug_time_monotonic_usec() - _start;
-		//printf("_diff is %lu\n", _diff);
 
 		//if (_diff > 1000) {
 		//	counter += _diff;
@@ -368,9 +367,12 @@ void *do_iofunc(void *arg) {
 
 #if 1
 		//sm->total_bytes += EACH_SIZE;
-		while (think_time != 40000) {
+		//_start = debug_time_monotonic_usec();
+		while (think_time != 4000) {
 			think_time += 1;
 		}
+		//_diff = debug_time_monotonic_usec() - _start;
+		//printf("_diff is %lu\n", _diff);
 		think_time = 0;
 #endif
 
@@ -406,7 +408,9 @@ void init_io_thread(void) {
 	p = (pthread_t *) malloc(sizeof(pthread_t) * NUM_IO_THREADS);
 	if (p == NULL) handle_error("malloc error!");
 	for (i = 0; i < NUM_IO_THREADS; i++) {
-		wj[i].vcpu = start_vcpu + i;
+		//wj[i].vcpu = start_vcpu + i;
+		if (i == 0) wj[i].vcpu = io_vn1;
+		else if (i == 1) wj[i].vcpu = io_vn2;
 		wj[i].len = 0;
 		wj[i].offset = 0;
 		wj[i].num = i;
@@ -433,11 +437,14 @@ void init_shared_mem(void) {
 int main(int argc, char **argv) {
 	//pid = getpid();
 	uint64_t vcpu_num = get_vcpu_count();
-	__vcpu_num = vcpu_num;
-	_vcpu_num = vcpu_num;
+	//__vcpu_num = vcpu_num;
+	//_vcpu_num = vcpu_num;
 	uint64_t i = 0;
 
-	printf("vCPU number is %lu\n", _vcpu_num);
+	io_vn1 = (uint64_t) atoi(argv[1]);
+	io_vn2 = (uint64_t) atoi(argv[2]);
+	printf("vCPU number is %lu\n", vcpu_num);
+	printf("io_vn1 is %lu, io_vn2 is %lu\n", io_vn1, io_vn2);
 	//printf("Process ID number is %d\n", pid);
 	//init_shared_mem();
 	init_io_thread();

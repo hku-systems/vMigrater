@@ -10,7 +10,7 @@
  *
  */
 #define _GNU_SOURCE
-#define TEST_TIO_MIGRATION
+//#define TEST_TIO_MIGRATION
 #define MY_DEBUG_CPU_
 #include <sys/signalfd.h>
 #include <signal.h>
@@ -54,12 +54,12 @@
 #define CPU_DEBUG4		"D_CPU_4"
 #define FNA				"/home/kvm1/sda2/testA"
 #define FNB				"/home/kvm1/sda3/testB"
-#define F_SIZE			(1ULL<<31ULL)
+#define F_SIZE			(1ULL<<30ULL)
 //#define F_SIZE			(1ULL<<27ULL)
 #define EACH_SIZE		(1ULL<<12ULL)
 #define MAX_NUM_IO		(1000ULL)
 
-#define NUM_IO_THREADS		(4ULL)
+#define NUM_IO_THREADS		(2ULL)
 
 #define handle_error_en(en, msg) \
 	do { errno = en; perror(msg); exit(EXIT_FAILURE); } while (0)
@@ -69,8 +69,6 @@
 
 uint64_t start_vcpu = 2ULL;
 uint64_t end_vcpu = 11ULL;
-uint64_t fd1;
-uint64_t fd2;
 
 struct buf {
 	uint64_t vcpu_num;
@@ -180,6 +178,8 @@ int shmid;
 char *shm;                                                              
 struct shared_mem *sm;
 //pid_t pid;
+uint64_t io_vn1 = 0;
+uint64_t io_vn2 = 0;
 
 sem_t sem_main;
 sem_t sem_worker;
@@ -282,18 +282,9 @@ void set_nice_priority(int priority, int pid) {
 }  
 
 void *do_iofunc(void *arg) {
-	uint64_t i = 0;
 	struct worker_job *_wj = (struct worker_job *) arg;
-	if (_wj->num == 0) {
-		i = 0;
-	} else if (_wj->num == 1) {
-		i = F_SIZE;
-	} else if (_wj->num == 2) {
-		i = F_SIZE * 2;
-	} else if (_wj->num == 3) {
-		i = F_SIZE * 3;
-	}
 	char buf[EACH_SIZE + 1];
+	uint64_t i = 0;
 	uint64_t j = 0;
 	uint64_t start;
 	uint64_t start1;
@@ -308,9 +299,19 @@ void *do_iofunc(void *arg) {
 	uint64_t flag = 0;
 	uint64_t s;
 	int pid;
-	int change = 0;
 
 
+	if ((_wj->num % 2) == 0) {
+		_wj->vcpu = io_vn1;
+		_wj->fd = open(FNA, O_RDONLY, 00777);
+		if (_wj->fd < 0) handle_error("Open fileA error!\n");
+		printf("Open file A ...\n");
+	} else {
+		_wj->vcpu = io_vn2;
+		_wj->fd = open(FNB, O_RDONLY, 00777);
+		if (_wj->fd < 0) handle_error("Open fileB error!\n");
+		printf("Open file B ...\n");
+	}
 	uint64_t _start;
 	uint64_t _diff;
 	int64_t think_time = 0;
@@ -348,24 +349,16 @@ void *do_iofunc(void *arg) {
 	uint64_t _mcounter = 0;
 	start = debug_time_monotonic_usec();
 	//i = F_SIZE - EACH_SIZE;
-	while (_i != F_SIZE) {
+	while (i != F_SIZE) {
 	//while (i > 0) {
 		//_start = debug_time_monotonic_usec();
 		//set_affinity(j);
 		//j = j + 1;
 		//if (j == 11) j = 2;
-		if (change == 0) {
-			if (EACH_SIZE != (_wj->len = pread(fd1, buf, EACH_SIZE, i))) {
-				fprintf(stderr, "This read, %lu,  failed!\n", (uint64_t) EACH_SIZE);
-				exit(EXIT_SUCCESS);
-			}
-			change = 1;
-		} else {
-			if (EACH_SIZE != (_wj->len = pread(fd2, buf, EACH_SIZE, i))) {
-				fprintf(stderr, "This read, %lu,  failed!\n", (uint64_t) EACH_SIZE);
-				exit(EXIT_SUCCESS);
-			}
-			change = 0;
+		//printf("i in thread %d is %lu\n", _wj->num, i);
+		if (EACH_SIZE != (_wj->len = pread(_wj->fd, buf, EACH_SIZE, i))) {
+			fprintf(stderr, "This read, %lu,  failed!\n", (uint64_t) EACH_SIZE);
+			exit(EXIT_SUCCESS);
 		}
 		//printf("i in thread %d is %lu\n", _wj->num, i);
 
@@ -378,8 +371,8 @@ void *do_iofunc(void *arg) {
 
 #if 1
 		//sm->total_bytes += EACH_SIZE;
-		if (bursty == 200000 * EACH_SIZE) {
-			while (think_time != 8000000000) { //20 s
+		if (bursty == 100 * EACH_SIZE) {
+			while (think_time != 8000000) {
 				think_time += 1;
 			}
 			think_time = 0;
@@ -389,7 +382,6 @@ void *do_iofunc(void *arg) {
 
 		//i = i - EACH_SIZE;
 		i = i + EACH_SIZE;
-		_i = _i + EACH_SIZE;
 		bursty = bursty + EACH_SIZE;
 		memset(buf, '\0', EACH_SIZE + 1);
 	}
@@ -415,18 +407,15 @@ void init_io_thread(void) {
 	int ret = 0;
 	uint64_t i = 0;
 
-	fd1 = open(FNA, O_RDONLY, 00777);
-	if (fd1 < 0) handle_error("Open fileA error!\n");
-	fd2 = open(FNB, O_RDONLY, 00777);
-	if (fd2 < 0) handle_error("Open fileB error!\n");
-
 	wj = (struct worker_job *) malloc(sizeof(struct worker_job) * NUM_IO_THREADS);
 	if (wj == NULL) handle_error("Malloc error!\n");
 
 	p = (pthread_t *) malloc(sizeof(pthread_t) * NUM_IO_THREADS);
 	if (p == NULL) handle_error("malloc error!");
 	for (i = 0; i < NUM_IO_THREADS; i++) {
-		wj[i].vcpu = start_vcpu + i;
+		//wj[i].vcpu = start_vcpu + i;
+		if (i == 0) wj[i].vcpu = io_vn1;
+		else if (i == 1) wj[i].vcpu = io_vn2;
 		wj[i].len = 0;
 		wj[i].offset = 0;
 		wj[i].num = i;
@@ -457,7 +446,10 @@ int main(int argc, char **argv) {
 	_vcpu_num = vcpu_num;
 	uint64_t i = 0;
 
+	io_vn1 = (uint64_t) atoi(argv[1]);
+	io_vn2 = (uint64_t) atoi(argv[2]);
 	printf("vCPU number is %lu\n", _vcpu_num);
+	printf("io_vn1 is %lu, io_vn2 is %lu\n", io_vn1, io_vn2);
 	//printf("Process ID number is %d\n", pid);
 	//init_shared_mem();
 	init_io_thread();

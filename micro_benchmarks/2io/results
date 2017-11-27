@@ -1,0 +1,280 @@
+>>>>>>>>>>>>>>>>>>>Sequential read, dedicated
+vCPU number is 8
+io_vn1 is 1, io_vn2 is 1
+Open file B ...
+I/O process ID number is 20515
+I/O thread 1 on vCPU 1
+Open file A ...
+I/O process ID number is 20514
+I/O thread 0 on vCPU 1
+diff is 6077475
+counter is 0
+mcounter is 0, _mounter is 0
+cpu_sleep_counter is 0
+Without migration, I/O throughput is 168.491026 MB/s.
+diff is 6084016
+counter is 0
+mcounter is 0, _mounter is 0
+cpu_sleep_counter is 0
+Without migration, I/O throughput is 168.309880 MB/s.
+vCPU number is 8
+io_vn1 is 1, io_vn2 is 1
+Open file B ...
+I/O process ID number is 20532
+Open file A ...
+I/O process ID number is 20531
+I/O thread 1 on vCPU 1
+I/O thread 0 on vCPU 1
+diff is 5648486
+counter is 0
+mcounter is 0, _mounter is 0
+cpu_sleep_counter is 0
+Without migration, I/O throughput is 181.287517 MB/s.
+diff is 5649183
+counter is 0
+mcounter is 0, _mounter is 0
+cpu_sleep_counter is 0
+Without migration, I/O throughput is 181.265149 MB/s.
+>>>>>>>>>>>>>>>>>>>>Sequential read, shared
+vCPU number is 8
+io_vn1 is 5, io_vn2 is 5
+Open file A ...
+Open file B ...
+I/O process ID number is 20548
+I/O process ID number is 20549
+I/O thread 1 on vCPU 5
+I/O thread 0 on vCPU 5
+diff is 12547025
+counter is 0
+mcounter is 0, _mounter is 0
+cpu_sleep_counter is 0
+Without migration, I/O throughput is 81.612972 MB/s.
+diff is 12736196
+counter is 0
+mcounter is 0, _mounter is 0
+cpu_sleep_counter is 0
+Without migration, I/O throughput is 80.400773 MB/s.
+vCPU number is 8
+io_vn1 is 5, io_vn2 is 5
+Open file B ...
+I/O process ID number is 20566
+Open file A ...
+I/O process ID number is 20565
+I/O thread 1 on vCPU 5
+I/O thread 0 on vCPU 5
+diff is 12563478
+counter is 0
+mcounter is 0, _mounter is 0
+cpu_sleep_counter is 0
+Without migration, I/O throughput is 81.506093 MB/s.
+diff is 12588594
+counter is 0
+mcounter is 0, _mounter is 0
+cpu_sleep_counter is 0
+Without migration, I/O throughput is 81.343476 MB/s.
+>>>>>>>>>>>>>>>>>>>Random read, dedicated
+vCPU number is 8
+io_vn1 is 1, io_vn2 is 1
+I/O process ID number is 20583
+I/O process ID number is 20582
+I/O thread 1 on vCPU 1
+I/O thread 0 on vCPU 1
+diff is 2865769
+counter is 0
+mcounter is 0, _mounter is 0
+cpu_sleep_counter is 0
+Without migration, I/O throughput is 44.665149 MB/s.
+diff is 4965604
+counter is 0
+mcounter is 0, _mounter is 0
+cpu_sleep_counter is 0
+Without migration, I/O throughput is 25.777327 MB/s.
+vCPU number is 8
+io_vn1 is 1, io_vn2 is 1
+I/O process ID number is 20600
+I/O process ID number is 20599
+I/O thread 1 on vCPU 1
+I/O thread 0 on vCPU 1
+diff is 2873355
+counter is 0
+mcounter is 0, _mounter is 0
+cpu_sleep_counter is 0
+Without migration, I/O throughput is 44.547228 MB/s.
+diff is 4994313
+counter is 0
+mcounter is 0, _mounter is 0
+cpu_sleep_counter is 0
+Without migration, I/O throughput is 25.629151 MB/s.
+>>>>>>>>>>>>>>>>>>>>Random read, shared
+vCPU number is 8
+io_vn1 is 5, io_vn2 is 5
+I/O process ID number is 20617
+I/O process ID number is 20616
+I/O thread 1 on vCPU 5
+I/O thread 0 on vCPU 5
+diff is 5942651
+counter is 0
+mcounter is 0, _mounter is 0
+cpu_sleep_counter is 0
+Without migration, I/O throughput is 21.539209 MB/s.
+diff is 10565651
+counter is 0
+mcounter is 0, _mounter is 0
+cpu_sleep_counter is 0
+Without migration, I/O throughput is 12.114729 MB/s.
+vCPU number is 8
+io_vn1 is 5, io_vn2 is 5
+I/O process ID number is 20634
+I/O process ID number is 20633
+I/O thread 1 on vCPU 5
+I/O thread 0 on vCPU 5
+diff is 5921826
+counter is 0
+mcounter is 0, _mounter is 0
+cpu_sleep_counter is 0
+Without migration, I/O throughput is 21.614955 MB/s.
+diff is 10490803
+counter is 0
+mcounter is 0, _mounter is 0
+cpu_sleep_counter is 0
+Without migration, I/O throughput is 12.201163 MB/s.
+>>>>>>>>>>>>>>>>>>>>Sequential bursty read, dedicated
+vCPU number is 8
+io_vn1 is 1, io_vn2 is 1
+Open file B ...
+I/O process ID number is 20651
+Open file A ...
+I/O process ID number is 20650
+I/O thread 1 on vCPU 1
+I/O thread 0 on vCPU 1
+diff is 99202747
+counter is 0
+mcounter is 0, _mounter is 0
+cpu_sleep_counter is 0
+Without migration, I/O throughput is 10.322295 MB/s.
+diff is 99203225
+counter is 0
+mcounter is 0, _mounter is 0
+cpu_sleep_counter is 0
+Without migration, I/O throughput is 10.322245 MB/s.
+vCPU number is 8
+io_vn1 is 1, io_vn2 is 1
+Open file B ...
+I/O process ID number is 20671
+Open file A ...
+I/O process ID number is 20670
+I/O thread 1 on vCPU 1
+I/O thread 0 on vCPU 1
+diff is 99151996
+counter is 0
+mcounter is 0, _mounter is 0
+cpu_sleep_counter is 0
+Without migration, I/O throughput is 10.327578 MB/s.
+diff is 99155153
+counter is 0
+mcounter is 0, _mounter is 0
+cpu_sleep_counter is 0
+Without migration, I/O throughput is 10.327249 MB/s.
+>>>>>>>>>>>>>>>>>>>>>Sequential bursty read, shared
+vCPU number is 8
+io_vn1 is 5, io_vn2 is 5
+Open file B ...
+I/O process ID number is 20688
+I/O thread 1 on vCPU 5
+Open file A ...
+I/O process ID number is 20687
+I/O thread 0 on vCPU 5
+diff is 220824713
+counter is 0
+mcounter is 0, _mounter is 0
+cpu_sleep_counter is 0
+Without migration, I/O throughput is 4.637162 MB/s.
+diff is 221283997
+counter is 0
+mcounter is 0, _mounter is 0
+cpu_sleep_counter is 0
+Without migration, I/O throughput is 4.627538 MB/s.
+vCPU number is 8
+io_vn1 is 5, io_vn2 is 5
+Open file B ...
+I/O process ID number is 20709
+I/O thread 1 on vCPU 5
+Open file A ...
+I/O process ID number is 20708
+I/O thread 0 on vCPU 5
+diff is 220018997
+counter is 0
+mcounter is 0, _mounter is 0
+cpu_sleep_counter is 0
+Without migration, I/O throughput is 4.654144 MB/s.
+diff is 220266130
+counter is 0
+mcounter is 0, _mounter is 0
+cpu_sleep_counter is 0
+Without migration, I/O throughput is 4.648922 MB/s.
+>>>>>>>>>>>>>>>>>>>>>Random bursty read, dedicated
+vCPU number is 8
+io_vn1 is 1, io_vn2 is 1
+I/O process ID number is 20729
+I/O process ID number is 20728
+I/O thread 1 on vCPU 1
+I/O thread 0 on vCPU 1
+diff is 14950286
+counter is 0
+mcounter is 0, _mounter is 0
+cpu_sleep_counter is 0
+Without migration, I/O throughput is 8.561709 MB/s.
+diff is 15750929
+counter is 0
+mcounter is 0, _mounter is 0
+cpu_sleep_counter is 0
+Without migration, I/O throughput is 8.126505 MB/s.
+vCPU number is 8
+io_vn1 is 1, io_vn2 is 1
+I/O process ID number is 20745
+I/O thread 0 on vCPU 1
+I/O process ID number is 20746
+I/O thread 1 on vCPU 1
+diff is 14989532
+counter is 0
+mcounter is 0, _mounter is 0
+cpu_sleep_counter is 0
+Without migration, I/O throughput is 8.539293 MB/s.
+diff is 15798601
+counter is 0
+mcounter is 0, _mounter is 0
+cpu_sleep_counter is 0
+Without migration, I/O throughput is 8.101983 MB/s.
+>>>>>>>>>>>>>>>>>>>>>Random bursty read, shared
+vCPU number is 8
+io_vn1 is 5, io_vn2 is 5
+I/O process ID number is 20763
+I/O thread 1 on vCPU 5
+I/O process ID number is 20762
+I/O thread 0 on vCPU 5
+diff is 31654841
+counter is 0
+mcounter is 0, _mounter is 0
+cpu_sleep_counter is 0
+Without migration, I/O throughput is 4.043615 MB/s.
+diff is 36460773
+counter is 0
+mcounter is 0, _mounter is 0
+cpu_sleep_counter is 0
+Without migration, I/O throughput is 3.510622 MB/s.
+vCPU number is 8
+io_vn1 is 5, io_vn2 is 5
+I/O process ID number is 20780
+I/O process ID number is 20779
+I/O thread 1 on vCPU 5
+I/O thread 0 on vCPU 5
+diff is 32163950
+counter is 0
+mcounter is 0, _mounter is 0
+cpu_sleep_counter is 0
+Without migration, I/O throughput is 3.979611 MB/s.
+diff is 35967330
+counter is 0
+mcounter is 0, _mounter is 0
+cpu_sleep_counter is 0
+Without migration, I/O throughput is 3.558785 MB/s.

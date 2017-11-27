@@ -59,7 +59,7 @@
 #define EACH_SIZE		(1ULL<<12ULL)
 #define MAX_NUM_IO		(1000ULL)
 
-#define NUM_IO_THREADS		(8ULL)
+#define NUM_IO_THREADS		(4ULL)
 
 #define handle_error_en(en, msg) \
 	do { errno = en; perror(msg); exit(EXIT_FAILURE); } while (0)
@@ -184,10 +184,6 @@ uint64_t io_vn1 = 0;
 uint64_t io_vn2 = 0;
 uint64_t io_vn3 = 0;
 uint64_t io_vn4 = 0;
-uint64_t io_vn5 = 0;
-uint64_t io_vn6 = 0;
-uint64_t io_vn7 = 0;
-uint64_t io_vn8 = 0;
 
 sem_t sem_main;
 sem_t sem_worker;
@@ -321,14 +317,6 @@ void *do_iofunc(void *arg) {
 		i = F_SIZE;
 	} else if (_wj->num == 3) {
 		i = F_SIZE;
-	} else if (_wj->num == 4) {
-		i = F_SIZE * 2;
-	} else if (_wj->num == 5) {
-		i = F_SIZE * 2;
-	} else if (_wj->num == 6) {
-		i = F_SIZE * 3;
-	} else if (_wj->num == 7) {
-		i = F_SIZE * 3;
 	}
 	pid = syscall(SYS_gettid);
 
@@ -353,6 +341,7 @@ void *do_iofunc(void *arg) {
 	j = 2;
 	io_vn = 0;
 	uint64_t _i = 0;
+	uint64_t bursty = 0;
 
 	memset(buf, '\0', EACH_SIZE + 1);
 	io_vn = get_pid_affinity(pid);
@@ -384,15 +373,19 @@ void *do_iofunc(void *arg) {
 
 #if 1
 		//sm->total_bytes += EACH_SIZE;
-		while (think_time != 4000) { //10us
-			think_time += 1;
+		if (bursty == 100 * EACH_SIZE) {
+			while (think_time != 8000000) {
+				think_time += 1;
+			}
+			think_time = 0;
+			bursty = 0;
 		}
-		think_time = 0;
 #endif
 
 		//i = i - EACH_SIZE;
 		i = i + EACH_SIZE;
 		_i = _i + EACH_SIZE;
+		bursty = bursty + EACH_SIZE;
 		memset(buf, '\0', EACH_SIZE + 1);
 	}
 	diff = debug_time_monotonic_usec() - start;
@@ -433,10 +426,6 @@ void init_io_thread(void) {
 		else if (i == 1) wj[i].vcpu = io_vn2;
 		else if (i == 2) wj[i].vcpu = io_vn3;
 		else if (i == 3) wj[i].vcpu = io_vn4;
-		else if (i == 4) wj[i].vcpu = io_vn5;
-		else if (i == 5) wj[i].vcpu = io_vn6;
-		else if (i == 6) wj[i].vcpu = io_vn7;
-		else if (i == 7) wj[i].vcpu = io_vn8;
 		wj[i].len = 0;
 		wj[i].offset = 0;
 		wj[i].num = i;
@@ -470,21 +459,16 @@ void init_shared_mem(void) {
 int main(int argc, char **argv) {
 	//pid = getpid();
 	uint64_t vcpu_num = get_vcpu_count();
-	__vcpu_num = vcpu_num;
-	_vcpu_num = vcpu_num;
+	//__vcpu_num = vcpu_num;
+	//_vcpu_num = vcpu_num;
 	uint64_t i = 0;
 
 	io_vn1 = (uint64_t) atoi(argv[1]);
 	io_vn2 = (uint64_t) atoi(argv[2]);
 	io_vn3 = (uint64_t) atoi(argv[3]);
 	io_vn4 = (uint64_t) atoi(argv[4]);
-	io_vn5 = (uint64_t) atoi(argv[5]);
-	io_vn6 = (uint64_t) atoi(argv[6]);
-	io_vn7 = (uint64_t) atoi(argv[7]);
-	io_vn8 = (uint64_t) atoi(argv[8]);
-	printf("vCPU number is %lu\n", _vcpu_num);
-	printf("io_vn1/2/3/4 are %lu/%lu/%lu/%lu\n", io_vn1, io_vn2, io_vn3, io_vn4);
-	printf("io_vn5/6/7/8 are %lu/%lu/%lu/%lu\n", io_vn5, io_vn6, io_vn7, io_vn8);
+	printf("vCPU number is %lu\n", vcpu_num);
+	printf("io_vn1/2/3/4 is %lu,%lu,%lu,%lu separately\n", io_vn1, io_vn2, io_vn3, io_vn4);
 	//printf("Process ID number is %d\n", pid);
 	//init_shared_mem();
 	init_io_thread();

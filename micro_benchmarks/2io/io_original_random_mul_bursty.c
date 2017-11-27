@@ -10,7 +10,7 @@
  *
  */
 #define _GNU_SOURCE
-#define TEST_TIO_MIGRATION
+//#define TEST_TIO_MIGRATION
 #define MY_DEBUG_CPU_
 #include <sys/signalfd.h>
 #include <signal.h>
@@ -54,8 +54,8 @@
 #define CPU_DEBUG4		"D_CPU_4"
 #define FNA				"/home/kvm1/sda2/testA"
 #define FNB				"/home/kvm1/sda3/testB"
-#define F_SIZE			(1ULL<<30ULL)
-//#define F_SIZE			(1ULL<<27ULL)
+//#define F_SIZE			(1ULL<<30ULL)
+#define F_SIZE			(1ULL<<27ULL)
 #define EACH_SIZE		(1ULL<<12ULL)
 #define MAX_NUM_IO		(1000ULL)
 
@@ -69,6 +69,8 @@
 
 uint64_t start_vcpu = 2ULL;
 uint64_t end_vcpu = 11ULL;
+int fd1;
+int fd2;
 
 struct buf {
 	uint64_t vcpu_num;
@@ -178,6 +180,8 @@ int shmid;
 char *shm;                                                              
 struct shared_mem *sm;
 //pid_t pid;
+uint64_t io_vn1 = 0;
+uint64_t io_vn2 = 0;
 
 sem_t sem_main;
 sem_t sem_worker;
@@ -283,6 +287,11 @@ void *do_iofunc(void *arg) {
 	struct worker_job *_wj = (struct worker_job *) arg;
 	char buf[EACH_SIZE + 1];
 	uint64_t i = 0;
+	if (_wj->num == 0) {
+		i = 0;
+	} else if (_wj->num == 1) {
+		i = F_SIZE;
+	}
 	uint64_t j = 0;
 	uint64_t start;
 	uint64_t start1;
@@ -293,43 +302,29 @@ void *do_iofunc(void *arg) {
 	uint64_t _io_vn = 0;
 	uint64_t vn;
 	uint64_t counter = 0;
+	uint64_t bursty = 0;
 	struct ts ts;
 	uint64_t flag = 0;
 	uint64_t s;
 	int pid;
 
 
-	if ((_wj->num % 2) == 0) {
-		_wj->vcpu = 1;
-		_wj->fd = open(FNA, O_RDONLY, 00777);
-		if (_wj->fd < 0) handle_error("Open fileA error!\n");
-		printf("Open file A ...\n");
-	} else {
-		_wj->vcpu = 11;
-		_wj->fd = open(FNB, O_RDONLY, 00777);
-		if (_wj->fd < 0) handle_error("Open fileB error!\n");
-		printf("Open file B ...\n");
-	}
 	uint64_t _start;
 	uint64_t _diff;
 	int64_t think_time = 0;
-	uint64_t bursty = 0;
 	uint64_t index;
 	pid = syscall(SYS_gettid);
 
 	//set_nice_priority(-20, rt.pid);
 	printf("I/O process ID number is %d\n", pid);
-#if 0
-	pthread_mutex_lock(&worker_mutex);
-	index = sm->counter;
-	(sm->io_thread[sm->counter]).pid = pid;
-	printf("index is %lu, pid is %lu, counter is %d, flag is %d\n",
-			(sm->io_thread[sm->counter]).index,
-			(sm->io_thread[sm->counter]).pid,
-			sm->counter, sm->flag);
-	sm->counter += 1;
-	pthread_mutex_unlock(&worker_mutex);
-#endif
+	//pthread_mutex_lock(&worker_mutex);
+	//index = sm->counter;
+	//(sm->io_thread[index]).pid = pid;
+	//(sm->io_thread[index]).is_finished = 0;
+	//printf("index is %lu, pid is %lu, counter is %d, flag is %d\n",
+	//		index, (sm->io_thread[sm->counter]).pid, sm->counter, sm->flag);
+	//sm->counter += 1;
+	//pthread_mutex_unlock(&worker_mutex);
 
 	//XXX Must set since the I/O thread would be pinned to that vCPU.
 	//j = 0;
@@ -338,6 +333,7 @@ void *do_iofunc(void *arg) {
 	j = 2;
 	io_vn = 0;
 	uint64_t _i = 0;
+	int change = 0;
 
 	memset(buf, '\0', EACH_SIZE + 1);
 	io_vn = get_pid_affinity(pid);
@@ -347,18 +343,25 @@ void *do_iofunc(void *arg) {
 	uint64_t _mcounter = 0;
 	start = debug_time_monotonic_usec();
 	//i = F_SIZE - EACH_SIZE;
-	while (i != F_SIZE) {
+	while (_i != F_SIZE) {
 	//while (i > 0) {
 		//_start = debug_time_monotonic_usec();
 		//set_affinity(j);
 		//j = j + 1;
 		//if (j == 11) j = 2;
-		//printf("i in thread %d is %lu\n", _wj->num, i);
-		if (EACH_SIZE != (_wj->len = pread(_wj->fd, buf, EACH_SIZE, i))) {
-			fprintf(stderr, "This read, %lu,  failed!\n", (uint64_t) EACH_SIZE);
-			exit(EXIT_SUCCESS);
+		if (change == 0) {
+			if (EACH_SIZE != (_wj->len = pread(fd1, buf, EACH_SIZE, i))) {
+				fprintf(stderr, "This read, %lu,  failed!\n", (uint64_t) EACH_SIZE);
+				exit(EXIT_SUCCESS);
+			}
+			change = 1;
+		} else {
+			if (EACH_SIZE != (_wj->len = pread(fd2, buf, EACH_SIZE, i))) {
+				fprintf(stderr, "This read, %lu,  failed!\n", (uint64_t) EACH_SIZE);
+				exit(EXIT_SUCCESS);
+			}
+			change = 0;
 		}
-		//printf("i in thread %d is %lu\n", _wj->num, i);
 
 		//_diff = debug_time_monotonic_usec() - _start;
 		//printf("_diff is %lu\n", _diff);
@@ -368,7 +371,10 @@ void *do_iofunc(void *arg) {
 		//}
 
 #if 1
+		//pthread_mutex_lock(&worker_mutex);
 		//sm->total_bytes += EACH_SIZE;
+		//pthread_mutex_unlock(&worker_mutex);
+
 		if (bursty == 100 * EACH_SIZE) {
 			while (think_time != 8000000) {
 				think_time += 1;
@@ -380,10 +386,15 @@ void *do_iofunc(void *arg) {
 
 		//i = i - EACH_SIZE;
 		i = i + EACH_SIZE;
+		_i = _i + EACH_SIZE;
 		bursty = bursty + EACH_SIZE;
 		memset(buf, '\0', EACH_SIZE + 1);
 	}
 	diff = debug_time_monotonic_usec() - start;
+	//pthread_mutex_lock(&worker_mutex);
+	//(sm->io_thread[index]).is_finished = 1;
+	//sm->counter -= 1;
+	//pthread_mutex_unlock(&worker_mutex);
 	printf("diff is %lu\n", diff);
 	printf("counter is %lu\n", counter);
 	printf("mcounter is %lu, _mounter is %lu\n", mcounter, _mcounter);
@@ -393,29 +404,38 @@ void *do_iofunc(void *arg) {
 #else
 	printf("Without migration, I/O throughput is %lf MB/s.\n", ((double) F_SIZE / (double) (1024.0 * 1024.0) )  / ((double) diff / (double) 1000000.0));
 #endif
-#if 0
-	pthread_mutex_lock(&worker_mutex);
-	(sm->io_thread[index]).is_finished = 1;
-	sm->counter -= 1;
-	pthread_mutex_unlock(&worker_mutex);
-#endif
 }
 
 void init_io_thread(void) {
 	int ret = 0;
 	uint64_t i = 0;
 
+	fd1 = open(FNA, O_RDONLY, 00777);
+	if (fd1 < 0) handle_error("Open fileA error!\n");
+	fd2 = open(FNB, O_RDONLY, 00777);
+	if (fd2 < 0) handle_error("Open fileB error!\n");
 	wj = (struct worker_job *) malloc(sizeof(struct worker_job) * NUM_IO_THREADS);
 	if (wj == NULL) handle_error("Malloc error!\n");
 
 	p = (pthread_t *) malloc(sizeof(pthread_t) * NUM_IO_THREADS);
 	if (p == NULL) handle_error("malloc error!");
 	for (i = 0; i < NUM_IO_THREADS; i++) {
-		wj[i].vcpu = start_vcpu + i;
+		//wj[i].vcpu = start_vcpu + i;
+		if (i == 0) wj[i].vcpu = io_vn1;
+		else if (i == 1) wj[i].vcpu = io_vn2;
 		wj[i].len = 0;
 		wj[i].offset = 0;
 		wj[i].num = i;
 
+#if 0
+		if ((i % 2) == 0) {
+			printf("Open file A ...\n");
+			wj[i].fd = fd1;
+		} else {
+			printf("Open file B ...\n");
+			wj[i].fd = fd2;
+		}
+#endif
 		ret = pthread_create(&(p[i]), NULL, do_iofunc, &(wj[i]));
 		if (ret != 0) handle_error("pthread create error!\n");
 	}
@@ -438,12 +458,16 @@ void init_shared_mem(void) {
 int main(int argc, char **argv) {
 	//pid = getpid();
 	uint64_t vcpu_num = get_vcpu_count();
-	__vcpu_num = vcpu_num;
-	_vcpu_num = vcpu_num;
+	//__vcpu_num = vcpu_num;
+	//vcpu_num = 4;
+	//_vcpu_num = vcpu_num;
 	uint64_t i = 0;
 
-	printf("vCPU number is %lu\n", _vcpu_num);
-	//printf("Process ID number is %d\n", pid);
+	io_vn1 = (uint64_t) atoi(argv[1]);
+	io_vn2 = (uint64_t) atoi(argv[2]);
+	printf("vCPU number is %lu\n", vcpu_num);
+	printf("io_vn1 is %lu, io_vn2 is %lu\n", io_vn1, io_vn2);
+//	printf("Process ID number is %d\n", pid);
 	//init_shared_mem();
 	init_io_thread();
 

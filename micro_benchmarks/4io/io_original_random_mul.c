@@ -180,6 +180,10 @@ int shmid;
 char *shm;                                                              
 struct shared_mem *sm;
 //pid_t pid;
+uint64_t io_vn1 = 0;
+uint64_t io_vn2 = 0;
+uint64_t io_vn3 = 0;
+uint64_t io_vn4 = 0;
 
 sem_t sem_main;
 sem_t sem_worker;
@@ -377,7 +381,7 @@ void *do_iofunc(void *arg) {
 
 #if 1
 		//sm->total_bytes += EACH_SIZE;
-		while (think_time != 40000) {
+		while (think_time != 4000) {
 			think_time += 1;
 		}
 		think_time = 0;
@@ -421,7 +425,11 @@ void init_io_thread(void) {
 	p = (pthread_t *) malloc(sizeof(pthread_t) * NUM_IO_THREADS);
 	if (p == NULL) handle_error("malloc error!");
 	for (i = 0; i < NUM_IO_THREADS; i++) {
-		wj[i].vcpu = start_vcpu + i;
+		//wj[i].vcpu = start_vcpu + i;
+		if (i == 0) wj[i].vcpu = io_vn1;
+		else if (i == 1) wj[i].vcpu = io_vn2;
+		else if (i == 2) wj[i].vcpu = io_vn3;
+		else if (i == 3) wj[i].vcpu = io_vn4;
 		wj[i].len = 0;
 		wj[i].offset = 0;
 		wj[i].num = i;
@@ -452,7 +460,12 @@ int main(int argc, char **argv) {
 	_vcpu_num = vcpu_num;
 	uint64_t i = 0;
 
+	io_vn1 = (uint64_t) atoi(argv[1]);
+	io_vn2 = (uint64_t) atoi(argv[2]);
+	io_vn3 = (uint64_t) atoi(argv[3]);
+	io_vn4 = (uint64_t) atoi(argv[4]);
 	printf("vCPU number is %lu\n", _vcpu_num);
+	printf("io_vn1/2/3/4 %lu, %lu, %lu, %lu\n", io_vn1, io_vn2, io_vn3, io_vn4);
 	//printf("Process ID number is %d\n", pid);
 	//init_shared_mem();
 	init_io_thread();

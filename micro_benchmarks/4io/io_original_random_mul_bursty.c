@@ -59,7 +59,7 @@
 #define EACH_SIZE		(1ULL<<12ULL)
 #define MAX_NUM_IO		(1000ULL)
 
-#define NUM_IO_THREADS		(8ULL)
+#define NUM_IO_THREADS		(4ULL)
 
 #define handle_error_en(en, msg) \
 	do { errno = en; perror(msg); exit(EXIT_FAILURE); } while (0)
@@ -180,6 +180,10 @@ int shmid;
 char *shm;                                                              
 struct shared_mem *sm;
 //pid_t pid;
+uint64_t io_vn1 = 0;
+uint64_t io_vn2 = 0;
+uint64_t io_vn3 = 0;
+uint64_t io_vn4 = 0;
 
 sem_t sem_main;
 sem_t sem_worker;
@@ -292,14 +296,6 @@ void *do_iofunc(void *arg) {
 		i = F_SIZE * 2;
 	} else if (_wj->num == 3) {
 		i = F_SIZE * 3;
-	} else if (_wj->num == 4) {
-		i = F_SIZE * 4;
-	} else if (_wj->num == 5) {
-		i = F_SIZE * 5;
-	} else if (_wj->num == 6) {
-		i = F_SIZE * 6;
-	} else if (_wj->num == 7) {
-		i = F_SIZE * 7;
 	}
 	char buf[EACH_SIZE + 1];
 	uint64_t j = 0;
@@ -317,12 +313,12 @@ void *do_iofunc(void *arg) {
 	uint64_t s;
 	int pid;
 	int change = 0;
+	uint64_t bursty = 0;
 
 
 	uint64_t _start;
 	uint64_t _diff;
 	int64_t think_time = 0;
-	uint64_t bursty = 0;
 	uint64_t index;
 	pid = syscall(SYS_gettid);
 
@@ -434,7 +430,11 @@ void init_io_thread(void) {
 	p = (pthread_t *) malloc(sizeof(pthread_t) * NUM_IO_THREADS);
 	if (p == NULL) handle_error("malloc error!");
 	for (i = 0; i < NUM_IO_THREADS; i++) {
-		wj[i].vcpu = start_vcpu + i;
+		//wj[i].vcpu = start_vcpu + i;
+		if (i == 0) wj[i].vcpu = io_vn1;
+		else if (i == 1) wj[i].vcpu = io_vn2;
+		else if (i == 2) wj[i].vcpu = io_vn3;
+		else if (i == 3) wj[i].vcpu = io_vn4;
 		wj[i].len = 0;
 		wj[i].offset = 0;
 		wj[i].num = i;
@@ -465,7 +465,12 @@ int main(int argc, char **argv) {
 	_vcpu_num = vcpu_num;
 	uint64_t i = 0;
 
+	io_vn1 = (uint64_t) atoi(argv[1]);
+	io_vn2 = (uint64_t) atoi(argv[2]);
+	io_vn3 = (uint64_t) atoi(argv[3]);
+	io_vn4 = (uint64_t) atoi(argv[4]);
 	printf("vCPU number is %lu\n", _vcpu_num);
+	printf("io_vn1/2/3/4 %lu, %lu, %lu, %lu\n", io_vn1, io_vn2, io_vn3, io_vn4);
 	//printf("Process ID number is %d\n", pid);
 	//init_shared_mem();
 	init_io_thread();
