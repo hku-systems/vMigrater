@@ -833,11 +833,12 @@ void *do_migrate(void *arg) {
 	start = debug_time_monotonic_usec();
 	while (1) {
 #if defined DEBUG_CPU_TS_ONLINE
-	printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
-	for (i = start_vcpu; i < end_vcpu; i++) {
-		printf("vCPU %lu's timeslice is %lu\n", i, vcpu[i].timeslice);
+	//printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
+	for (i = 0; i < 1000; i++) {
+		printf("%lu\n", vcpu[7].timeslice);
+		usleep(30000);
 	}
-	usleep(30000);
+	break;
 #else
 	//TODO: PUSH I/O intensive threads to scheduled vCPUs
 		if (0 == is_cpu_running(2lu) && flag == 0) {
