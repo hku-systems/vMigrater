@@ -1,17 +1,17 @@
 /*
- * sol/sol1.c
+ * main.c
  *
- * Weiwei Jia <wj47@njit.edu> (C) 2016
+ * Weiwei Jia <harryxiyou@gmail.com> (C) 2016
  *
  * Solution 1 implementation for I/O project.
- *
- * TODO: Find why detected time slice is bigger than (shced_latecy_ns /
- * vCPU_num).
  *
  */
 #define _GNU_SOURCE
 #define TEST_TIO_MIGRATION
-#define MY_DEBUG_CPU_
+//#define MY_DEBUG_CPU_
+#define DEBUG_CPU_TS_ONLINE
+/*VMIGRATER_SHARED_MEMORY: used to get I/O intensive thread pid*/
+//#define VMIGRATER_SHARED_MEMORY 
 #include <sys/signalfd.h>
 #include <signal.h>
 #include <errno.h>
@@ -24,7 +24,7 @@
 #include <sched.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include "debug.h"
+#include "../debug.h"
 #include "glib-2.0/glib.h"
 #include <pthread.h>
 #include <assert.h>
@@ -40,11 +40,11 @@
 #include <sys/shm.h>
 #include <sys/ipc.h>
 
-#define SLEEP_TIME		(300UL)
+#define SLEEP_TIME		(300ULL)
 //#define DIFF_USEC		(750UL)
-#define DIFF_USEC		(3000UL)
+#define DIFF_USEC		(9000ULL)
 #define DEVIATION		(55UL)
-#define SIZE			(1<<20)
+#define SIZE			(1<<27)
 
 #define IO_DEBUG		"D_IO"
 #define CPU_DEBUG0		"D_CPU_0"
@@ -58,11 +58,51 @@
 #define F_SIZE			(1ULL<<33ULL)
 #define EACH_SIZE		(1ULL<<12ULL)
 
+#define MAX_NUM_IO		(1000ULL)
+
+#define TIME_SLICE_INIT		(11000ULL)
+
 #define handle_error_en(en, msg) \
 	do { errno = en; perror(msg); exit(EXIT_FAILURE); } while (0)
 
 #define handle_error(msg) \
 	do { perror(msg); exit(EXIT_FAILURE); } while (0)
+
+//for debug
+uint64_t debug_flag = 0;
+uint64_t buf_flag = 0;
+
+//TODO: fix hardcoded
+static int start_vcpu = 2;
+static int end_vcpu = 8;
+
+//migration use
+int64_t num_vcpu_recipient = 0;
+int64_t num_recipient = 0;
+int64_t num_movable = 0;
+
+//period for migration time out
+uint64_t period = 1000;
+uint64_t period_start = 0;
+uint64_t period_flag = 0;
+
+//for low_threshold (in microseconds)
+int64_t low_threshold = 5000LL;
+int64_t low_threshold_minus = 0;
+int64_t low_threshold_middle = 0;
+int64_t low_threshold_plus = 0;
+int64_t low_threshold_curr = 0;
+uint64_t low_threshold_minus_performance = 0;
+uint64_t low_threshold_middle_performance = 0;
+uint64_t low_threshold_plus_performance = 0;
+uint64_t low_threshold_cycle = 0;
+//end
+
+//for global timer
+uint64_t global_timer_start = 0;
+uint64_t global_timer_diff = 0;
+uint64_t global_timer_flag = 0;
+//end
 
 struct buf {
 	uint64_t vcpu_num;
@@ -95,9 +135,10 @@ struct vcpu {
 	uint64_t end_time;
 	uint64_t timeslice;
 	int64_t left_time;
-	uint64_t io_counter;
-	uint64_t deschedule_ts;
 	uint64_t dead_ts;
+
+	//for multiple I/O thread migration
+	uint64_t is_recipient;
 	
 #if defined MY_DEBUG_CPU_
 	int cpu_fd;
@@ -120,7 +161,7 @@ struct worker_job {
 	int flag;
 
 	int fd;
-	uint64_t offset;
+uint64_t offset;
 	uint64_t len;
 	char buf[EACH_SIZE];
 };
@@ -134,15 +175,29 @@ struct register_task {
 	char proc_path[1024];
 };
 
-struct shared_mem {
-	int pid;
-	int counter;
-	int flag;
+struct sorted_vcpu {
+	uint64_t io_vn;
+	int64_t left_time;
 };
 
-//TODO: fix hardcoded
-static int start_vcpu = 2;
-static int end_vcpu = 11;
+struct io {
+	uint64_t pid;
+	uint64_t is_movable;
+	uint64_t is_finished;
+	uint64_t index;
+
+	int64_t prev_left_time;
+	int64_t curr_left_time;
+	uint64_t prev_ts;
+};
+
+struct shared_mem {
+	int counter;
+	int cpu_flag;
+	int flag;
+	uint64_t total_bytes;
+	struct io io_thread[MAX_NUM_IO];
+};
 
 static struct vcpu *vcpu;
 static struct _vcpu *_vcpu;
@@ -158,19 +213,21 @@ static pthread_t pio;
 static struct register_task rt;
 static uint64_t cpu_sleep_counter = 0;
 
-uint64_t prev_ts = 0;
-int64_t prev_left_time = 0;
-int64_t curr_left_time = 0;
-
-key_t key = 99999;
-int shmid;
-char *shm;
-struct shared_mem *sm;
-
 uint64_t counter_affi = 0;
 uint64_t cost[10];
 uint64_t start_affi = 0;
 uint64_t diff_affi = 0;
+
+//shared memory
+key_t key = 99996;
+int shmid;
+char *shm;
+struct shared_mem *sm;
+
+struct sorted_vcpu *sv;
+
+int64_t sum = 0;
+int sum_counter = 0;
 
 sem_t sem_main;
 sem_t sem_worker;
@@ -179,19 +236,6 @@ pthread_cond_t worker_cond  = PTHREAD_COND_INITIALIZER;
 pthread_cond_t main_cond  = PTHREAD_COND_INITIALIZER;
 pthread_mutex_t worker_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t main_mutex = PTHREAD_MUTEX_INITIALIZER;
-
-void sig_handler(int signo) {
-	if (signo == SIGINT) {
-		if (p != NULL)
-			free(p);
-		if(vcpu != NULL)
-			free(vcpu);
-		close(tio.fd);
-	} else
-		handle_error("Signal Error!\n");
-
-		exit(EXIT_SUCCESS);
-}
 
 int get_vcpu_count(void) {
 	return get_nprocs();
@@ -249,7 +293,7 @@ void set_pid_affinity(uint64_t vcpu_num, int pid) {
 	CPU_SET(vcpu_num, &cpuset);
 
 	if (sched_setaffinity(pid, sizeof(cpu_set_t), &cpuset) < 0) {
-		fprintf(stderr, "Set thread to VCPU error!\n");
+		//fprintf(stderr, "Set thread to VCPU error!\n");
 	}
 }
 
@@ -308,8 +352,8 @@ void CPU_WRITE(uint64_t vn) {
 	uint64_t dst_len = 0;
 	struct ts *ts;
 
-	buf = (char *) malloc(sizeof(char) * SIZE * 401);
-	memset(buf, '\0', SIZE * 401);
+	buf = (char *) malloc(sizeof(char) * SIZE);
+	memset(buf, '\0', SIZE);
     for (i = 0; i < 100000; i++) {
 		ts = (struct ts *) (vcpu[vn].buf + src_len); 
 		sprintf(buf + dst_len, "%lu  %lu  %lu  %lu  %ld  %lu\n", ts->flag, ts->vn, ts->time, ts->counter, ts->lt, ts->ct);
@@ -339,8 +383,10 @@ void DEBUG_CPU_BUF(uint64_t flag, uint64_t vn, uint64_t time, uint64_t counter, 
 			ts.counter = counter;
 			ts.lt = lt;
 			ts.ct = ct;
+
 			memcpy(vcpu[3].buf + vcpu[3].buf_len, &(ts), sizeof(struct ts));
 			vcpu[3].buf_len += sizeof(struct ts);
+			if (vcpu[3].buf_len >= SIZE) handle_error("Debug buf leak!\n");
 			vcpu[3].buf_counter += 1;
 		} else {
 #endif
@@ -353,10 +399,14 @@ void DEBUG_CPU_BUF(uint64_t flag, uint64_t vn, uint64_t time, uint64_t counter, 
 #if 1
 			memcpy(vcpu[2].buf + vcpu[2].buf_len, &(ts), sizeof(struct ts));
 			vcpu[2].buf_len += sizeof(struct ts);
+			if (vcpu[2].buf_len >= SIZE) handle_error("Debug buf leak!\n");
 			vcpu[2].buf_counter += 1;
+//			printf("buf len is %lu, buf counter is %lu\n", vcpu[2].buf_len, vcpu[2].buf_counter);
+//			printf("%lu  %lu  %lu  %lu  %ld  %lu\n", ts.flag, ts.vn, ts.time, ts.counter, ts.lt, ts.ct);
 #else
 			memcpy(vcpu[vn].buf + vcpu[vn].buf_len, &(ts), sizeof(struct ts));
 			vcpu[vn].buf_len += sizeof(struct ts);
+			if (vcpu[vn].buf_len >= SIZE) handle_error("Debug buf leak!\n");
 			vcpu[vn].buf_counter += 1;
 #endif
 		}
@@ -482,9 +532,11 @@ uint64_t predict_one_vcpu(void) {
 	return _vn;
 }
 
+#if defined MY_DEBUG_CPU_
 void do_debug_cpu_buf(uint64_t i) {
 	DEBUG_CPU_BUF(1, i, vcpu[i].timeslice, vcpu[i].counter, vcpu[i].left_time, debug_time_monotonic_usec());
 }
+#endif
 
 void *worker_thread(void *arg) {
 	uint64_t vn = *((uint64_t *) arg);
@@ -687,37 +739,6 @@ int64_t get_lefttime(uint64_t vn) {
 		return vcpu[vn].left_time;
 }
 
-void cal_timeslice(void) {
-		//counter = counter + 1;
-		//total_timeslice = total_timeslice + vcpu[vn].counter;
-		//if (counter == 100) {
-		//	counter = 0;
-		//	vcpu[vn].timeslice = vcpu[vn].counter;
-		//	total_timeslice = 0;
-		//}
-}
-
-#if 0
-void _do_migrate(uint64_t i) {
-	uint64_t _vn = i;
-	uint64_t j = 0;
-
-		if (vcpu[i].counter <= 1000) {
-#if defined MY_DEBUG_CPU_
-			if ((vcpu[i].io_counter > j) && (_vn != i))
-				DEBUG_CPU_BUF(1, i);
-#endif
-			continue;
-		} else {
-			_vn = i;
-			//i = counter_migration(i);
-			i = timeslice_migration(i);
-			if (_vn != i)
-				j = vcpu[i].io_counter; 
-		}
-}
-#endif
-
 uint64_t is_cpu_running(uint64_t vn) {
 	int64_t plus_one = _vcpu[vn].plus_one;
 
@@ -779,7 +800,7 @@ void init_proc_iothread(void) {
 void *do_migrate(void *arg) {
 	uint64_t vn = *((uint64_t *) arg);
 	set_affinity(vn);
-	set_priority();
+	//set_priority();
 	uint64_t i;
 	uint64_t io_vn;
 	uint64_t j = 0;
@@ -811,6 +832,14 @@ void *do_migrate(void *arg) {
 
 	start = debug_time_monotonic_usec();
 	while (1) {
+#if defined DEBUG_CPU_TS_ONLINE
+	printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
+	for (i = start_vcpu; i < end_vcpu; i++) {
+		printf("vCPU %lu's timeslice is %lu\n", i, vcpu[i].timeslice);
+	}
+	usleep(30000);
+#else
+	//TODO: PUSH I/O intensive threads to scheduled vCPUs
 		if (0 == is_cpu_running(2lu) && flag == 0) {
 			flag = 1;
 			diff = debug_time_monotonic_usec() - start;
@@ -824,7 +853,396 @@ void *do_migrate(void *arg) {
 		//if (vcpu[1].buf_counter == 10000) {
 		//	CPU_WRITE(1);
 		//}
+#endif
 	}
+}
+
+void set_movable(uint64_t vn) {
+	uint64_t i = 0;
+
+	if (vcpu[vn].is_recipient == 1) {
+		vcpu[vn].is_recipient = 0;
+//		if (num_vcpu_recipient > 0) num_vcpu_recipient -= 1;
+#if 1
+		if (sm->counter > 0) {
+			for (i = 0; i < sm->counter; i++) {
+				if (((sm->io_thread[i]).is_finished == 0) &&
+				(vn == get_pid_affinity((sm->io_thread[i]).pid))) {
+					(sm->io_thread[i]).is_movable = 1;
+				}
+			}
+		}
+#endif
+	}
+}
+
+void set_recipient(uint64_t vn) {
+	uint64_t i = 0;
+
+	if (vcpu[vn].is_recipient == 0) {
+		vcpu[vn].is_recipient = 1;
+		num_vcpu_recipient += 1;
+#if 1
+		if (sm->counter > 0) {
+			for (i = 0; i < sm->counter; i++) {
+				if (((sm->io_thread[i]).is_finished == 0) &&
+				(vn == get_pid_affinity((sm->io_thread[i]).pid))) {
+					//if ((sm->io_thread[i]).is_movable == 1) {
+					(sm->io_thread[i]).is_movable = 0;
+						//if (num_movable > 0) num_movable -= 1;
+						//num_recipient += 1;
+					//}
+				}
+			}
+		}
+	}
+#endif
+}
+
+void set_movable_recipient(uint64_t vn) {
+	if (vcpu[vn].left_time <= low_threshold_curr) {
+		set_movable(vn);
+	} else {
+		set_recipient(vn);
+	}
+}
+
+void do_migration_no_recipient(void) {
+	uint64_t i = 0;
+	uint64_t io_vn;
+	uint64_t _io_vn;
+
+	for (i = 0; i < sm->counter; i++) {
+		_io_vn == get_pid_affinity((sm->io_thread[i]).pid);
+		if (vcpu[_io_vn].left_time <= (int64_t) 1000) {
+			io_vn = get_max_left_time();
+			if (vcpu[io_vn].left_time >= (int64_t) 2000) {
+				if ((sm->io_thread[i]).is_finished == 0) {
+					set_pid_affinity(io_vn, (sm->io_thread[i]).pid);
+				}
+			} else {
+				io_vn = predict_one_vcpu();
+				if ((sm->io_thread[i]).is_finished == 0) {
+					set_pid_affinity(io_vn, (sm->io_thread[i]).pid);
+				}
+			}
+		}
+	}
+}
+
+void set_period(void) {
+	if (period_flag == 0) {
+		period_flag = 1;
+		period_start = debug_time_monotonic_usec();
+	} else {
+		period = debug_time_monotonic_usec() - period_start;
+		period_start = debug_time_monotonic_usec();
+	}
+}
+
+uint64_t is_period_timeout(void) {
+	if ((debug_time_monotonic_usec() - period_start) > period) {
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
+void set_next_low_threshold(uint64_t low_threshold_minus_performance,
+		uint64_t low_threshold_middle_performance,
+		uint64_t low_threshold_plus_performance) {
+	if (low_threshold_minus_performance > low_threshold_middle_performance) {
+		low_threshold = low_threshold_minus;
+		if (low_threshold_minus_performance > low_threshold_plus_performance) {
+			low_threshold = low_threshold_minus;
+		} else {
+			low_threshold = low_threshold_plus;
+		}
+	} else {
+		low_threshold = low_threshold_middle;
+		if (low_threshold_middle_performance > low_threshold_plus_performance) {
+			low_threshold = low_threshold_middle;
+		} else {
+			low_threshold = low_threshold_plus;
+		}
+	}
+
+	if (low_threshold < 2000LL || low_threshold > 11000LL) {
+		low_threshold = 6000LL;
+	}
+
+//	printf("low threshold is %lu\n", low_threshold);
+}
+
+void init_low_threshold(void) {
+	low_threshold_minus = low_threshold - 1000;
+	low_threshold_middle = low_threshold;
+	low_threshold_plus = low_threshold + 1000;
+	low_threshold_curr = low_threshold_minus;
+}
+
+void tune_low_threshold(void) {
+	if (global_timer_flag == 0) {
+		global_timer_flag = 1;
+		global_timer_start = debug_time_monotonic_usec();
+	}
+	if (global_timer_flag == 1) {
+		global_timer_diff = debug_time_monotonic_usec() - global_timer_start;
+		//TODO: fix 20 timeslices for one cycle hardcoded
+		if (global_timer_diff >= 20 * 11000) {
+			global_timer_flag = 0;
+			if (low_threshold_cycle == 0) {
+				low_threshold_cycle = 1;
+				low_threshold_curr = low_threshold_middle;
+				low_threshold_minus_performance = sm->total_bytes;
+				sm->total_bytes = 0;
+			} else if (low_threshold_cycle == 1) {
+				low_threshold_cycle = 2;
+				low_threshold_curr = low_threshold_plus;
+				low_threshold_middle_performance = sm->total_bytes;
+				sm->total_bytes = 0;
+			} else if (low_threshold_cycle == 2) {
+				low_threshold_plus_performance = sm->total_bytes;
+
+				set_next_low_threshold(low_threshold_minus_performance,
+						low_threshold_middle_performance,
+						low_threshold_plus_performance);
+
+				sm->total_bytes = 0;
+				low_threshold_cycle = 0;
+				init_low_threshold();
+				low_threshold_minus_performance = 0;
+				low_threshold_middle_performance = 0;
+				low_threshold_plus_performance = 0;
+			}
+		}
+	}
+}
+
+void sort_vcpu(void) {
+	uint64_t i = 0;
+	uint64_t j = 0;
+	uint64_t tmp_vn;
+	int64_t tmp_lt;
+
+	for (i = start_vcpu; i < end_vcpu; i++) {
+		sv[j].io_vn = i;
+		sv[j].left_time = vcpu[i].left_time;
+		j += 1;
+	}
+
+	for (i = 0; i < end_vcpu - start_vcpu; i++) {
+		for (j = i + 1; j < end_vcpu - start_vcpu; j++) {
+			if(sv[i].left_time < sv[j].left_time) {
+				tmp_vn = sv[j].io_vn;
+				tmp_lt = sv[j].left_time;
+				sv[j].io_vn = sv[i].io_vn;
+				sv[j].left_time = sv[i].left_time;
+				sv[i].io_vn = tmp_vn;
+				sv[i].left_time = tmp_lt;
+			}
+		}
+	}
+}
+
+void cal_movable(void) {
+	uint64_t io_vn = 0;
+	uint64_t _num_movable = 0;
+	uint64_t i = 0;
+
+	if (sm->counter > 0) {
+		for (i = 0; i < sm->counter; i++) {
+			if ((sm->io_thread[i]).is_finished == 0) {
+				io_vn = get_pid_affinity((sm->io_thread[i]).pid);
+//				if (debug_flag <= 1000) {
+//					printf("I/O thread %lu on vCPU %lu left time is %ld\n", i, io_vn, vcpu[io_vn].left_time);
+//					debug_flag += 1;
+//				}
+				if (vcpu[io_vn].left_time <= low_threshold_curr) {
+                    (sm->io_thread[i]).is_movable = 1;
+					_num_movable += 1;
+				} else {
+                    (sm->io_thread[i]).is_movable = 0;
+				}
+			}
+		}
+//		if (debug_flag <= 1000) {
+//			printf("====================================================\n");
+//		}
+	}
+	//TODO: mutex???
+	num_movable = _num_movable;
+}
+
+void cal_recipient(void) {
+	uint64_t i = 0;
+	uint64_t _num_vcpu_recipient = 0;
+
+	for (i = start_vcpu; i < end_vcpu; i++) {
+		if (vcpu[i].left_time > low_threshold_curr) {
+			vcpu[i].is_recipient = 1;
+			_num_vcpu_recipient += 1;
+		} else {
+			vcpu[i].is_recipient = 0;
+		}
+	}
+
+	//TODO: concurrent control???
+	num_vcpu_recipient = _num_vcpu_recipient;
+}
+
+void distribute_io(uint64_t vn) {
+	uint64_t i = 0;
+	uint64_t j = 0;
+	uint64_t num_mov = 0;
+	uint64_t io_vn = 0;
+	uint64_t count[_vcpu_num];
+
+	for (i = start_vcpu; i < end_vcpu; i++) {
+		count[i] = 0;
+	}
+
+	for (i = 0; i < sm->counter; i++) {
+		if ((sm->io_thread[i]).is_finished == 0) {
+			io_vn = get_pid_affinity((sm->io_thread[i]).pid);
+			count[io_vn] += 1;
+		}
+	}
+
+	for (i = start_vcpu; i < end_vcpu; i++) {
+		if (count[i] >= 2) {
+			for (j = 0; j < sm->counter; j++) {
+				io_vn = get_pid_affinity((sm->io_thread[j]).pid);
+				if (io_vn == i) {
+					if ((vn != i) && (count[vn] == 0) && 
+						(vcpu[vn].left_time >= low_threshold_curr) && 
+							((sm->io_thread[j]).is_finished == 0)) {
+						set_pid_affinity(vn, ((sm->io_thread[j]).pid));
+						count[i] -= 1;
+						if (count[i] <= 1) break;
+					}
+				}
+			}
+		}
+	}
+
+}
+
+void do_migration(void) {
+	uint64_t avg_io = 0;
+	uint64_t num_io = 0;
+	uint64_t num_mov = 0;
+	uint64_t i = 0;
+	uint64_t j = 0;
+	uint64_t total_moved_io = 0;
+
+	cal_movable();
+	//printf("num_movable is %lu\n", num_movable);
+
+	if (num_movable > 0) {
+		cal_recipient();
+		//printf("num_vcpu_recipient is %lu\n", num_vcpu_recipient);
+		if (num_vcpu_recipient == 0) {
+			do_migration_no_recipient();
+		} else {
+			avg_io = sm->counter / num_vcpu_recipient;
+			if (avg_io < 1) {
+				avg_io = 1;
+			}
+			sort_vcpu();
+			for (i = 0; i < (end_vcpu - start_vcpu); i++) { //sorted vcpu
+				num_io = 0;
+				num_mov = 0;
+				if (vcpu[sv[i].io_vn].is_recipient == 1) {
+					// calculate the num_io on this vCPU
+					for (j = 0; j < sm->counter; j++) {
+						if (((sm->io_thread[j]).is_finished == 0) &&
+							(sv[i].io_vn == get_pid_affinity((sm->io_thread[j]).pid))) {
+							num_io += 1;
+						}
+					}
+					num_mov = avg_io - num_io;
+					if (num_mov > 0) {
+						for (j = 0; j < sm->counter; j++) {
+							if (((sm->io_thread[j]).is_movable == 1) && 
+									((sm->io_thread[j]).is_finished == 0)) {
+								set_pid_affinity(sv[i].io_vn, ((sm->io_thread[j]).pid));
+								num_mov = num_mov - 1;
+								total_moved_io += 1;
+							}
+							if (num_mov <= 0) break;
+						}
+					}
+				} else {
+					//since vcpu is sorted according to remaining time slice from big to small
+					break;
+				}
+
+				if (total_moved_io >= num_movable) break;
+			}
+		}
+	}
+
+	//distribute_io();
+}
+
+void set_curr_left_time(void) {
+	uint64_t i = 0;
+	uint64_t io_vn = 0;
+
+	for(i = 0; i < sm->counter; i++) {
+		io_vn = get_pid_affinity((sm->io_thread[i]).pid);
+		(sm->io_thread[i]).curr_left_time = vcpu[io_vn].left_time;
+	}
+}
+
+void set_prev_left_time(void) {
+	uint64_t i = 0;
+	uint64_t io_vn = 0;
+
+	for(i = 0; i < sm->counter; i++) {
+		io_vn = get_pid_affinity((sm->io_thread[i]).pid);
+		(sm->io_thread[i]).prev_left_time = vcpu[io_vn].left_time;
+		if ((debug_time_monotonic_usec() - (sm->io_thread[i]).prev_ts) > 1000ULL) {
+			//Concurrency control
+			(sm->io_thread[i]).prev_ts = debug_time_monotonic_usec();
+		}
+	}
+}
+
+void migrate_blocked_io(uint64_t vn) {
+	uint64_t i = 0;
+	uint64_t io_vn = 0;
+#if 0
+	uint64_t count[_vcpu_num];
+
+	for (i = start_vcpu; i < end_vcpu; i++) {
+		count[i] = 0;
+	}
+
+	for (i = 0; i < sm->counter; i++) {
+		if ((sm->io_thread[i]).is_finished == 0) {
+			io_vn = get_pid_affinity((sm->io_thread[i]).pid);
+			count[io_vn] += 1;
+		}
+	}
+#endif
+
+	set_curr_left_time();
+
+	for(i = 0; i < sm->counter; i++) {
+		io_vn = get_pid_affinity((sm->io_thread[i]).pid);
+		if (((sm->io_thread[i]).prev_left_time == (sm->io_thread[i]).curr_left_time) &&
+			((debug_time_monotonic_usec() - (sm->io_thread[i]).prev_ts) >= SLEEP_TIME * 3) &&
+				((sm->io_thread[i]).is_finished == 0) &&
+					(vcpu[vn].left_time >= low_threshold_curr)) {
+//						(count[io_vn] == 0)) {
+//		if ((sm->io_thread[i]).prev_left_time == (sm->io_thread[i]).curr_left_time) {
+			set_pid_affinity(vn, (sm->io_thread[i]).pid);
+		}
+	}
+
+	set_prev_left_time();
 }
 
 void *thread_func(void *arg) {
@@ -844,110 +1262,83 @@ void *thread_func(void *arg) {
 	uint64_t flag = 0;
 	uint64_t ret;
 	uint64_t start_time = 0;
-	uint64_t end_time = 0;
 	uint64_t diff_time = 0;
 	uint64_t total_timeslice = 0;
 	uint64_t end = 0;
 	int len = 0;
 	uint64_t deschedule = 0;
-	int debug_flag = 0;
+	uint64_t _debug_flag = 0;
 
 	start_time = debug_time_monotonic_usec();
 	while(1) {
-		//printf("vcpu %lu's timestamp is %lu\n", vn, debug_time_monotonic_usec());
-#if 1
-		if (flag == 0) {
+		if (flag == 0) {//init
 			start_time = debug_time_monotonic_usec();
 			vcpu[vn].start_time = debug_time_monotonic_usec();
+			vcpu[vn].end_time = debug_time_monotonic_usec();
 			flag = 1;
 		} else {
 			start_time = debug_time_monotonic_usec();
 			vcpu[vn].end_time = debug_time_monotonic_usec();
 		}
 		usleep(SLEEP_TIME);
-		end_time = debug_time_monotonic_usec();
-		diff_time = end_time - start_time;
+		diff_time = debug_time_monotonic_usec() - start_time;
 		if (diff_time > DIFF_USEC) {
-			vcpu[vn].deschedule_ts = diff_time;
-			vcpu[vn].timeslice = vcpu[vn].end_time - vcpu[vn].start_time + (uint64_t) SLEEP_TIME;
+			vcpu[vn].timeslice = vcpu[vn].end_time - vcpu[vn].start_time + SLEEP_TIME;
+			if ((vcpu[vn].timeslice >= (DIFF_USEC * 2)) || 
+			   (vcpu[vn].timeslice < DIFF_USEC)) {
+				//FIXME: hardcoded
+				vcpu[vn].timeslice = TIME_SLICE_INIT;
+			}
 			vcpu[vn].counter = 0;
-			vcpu[vn].left_time = vcpu[vn].timeslice;
+			vcpu[vn].left_time = (int64_t) vcpu[vn].timeslice;
 			vcpu[vn].start_time = debug_time_monotonic_usec();
 
-			//io_vn = get_affinity_out(rt.tid);
-			//io_vn = get_affinity(); //TODO: remove
-			//if (vcpu[io_vn].left_time <= 4000) {
-				/*XXX: avoid frequent set_affinity when IO thread has
-				think time */
-				//set_affinity_out(vn, rt.tid);
-				//counter_affi += 1;
-			//}
-			if ((sm->flag == 1) && (-1 != (io_vn = get_pid_affinity(sm->pid)))) {
-		//		if (debug_flag != 100) {
-					//printf("shared pid is %d, io_vn is %lu, left time is %ld\n", sm->pid, io_vn, vcpu[io_vn].left_time);
-		//			printf("vcpu: %lu, current time: %lu, io_vn: %lu, io_vn left time: %ld\n", vn, debug_time_monotonic_usec(), io_vn, vcpu[io_vn].left_time);
-		//			debug_flag += 1;
-		//		}
-				curr_left_time = vcpu[io_vn].left_time;
-				if (vcpu[io_vn].left_time < (int64_t) 6000 || ((prev_left_time == curr_left_time) && (debug_time_monotonic_usec() - prev_ts > (uint64_t) 300))) {
-					set_pid_affinity(vn, sm->pid);
-				}
-                io_vn = get_pid_affinity(sm->pid);
-				prev_left_time = vcpu[io_vn].left_time;
-				prev_ts = debug_time_monotonic_usec();
+#if 0
+			if ((sm->flag == 1) && (sm->counter > 0)) {
+				migrate_blocked_io(vn);
+				distribute_io(vn);
+				do_migration();
 			}
+#endif
 		} else {
 			vcpu[vn].counter = vcpu[vn].end_time - vcpu[vn].start_time;
-			vcpu[vn].left_time = vcpu[vn].timeslice - vcpu[vn].counter;
-			//if (vcpu[vn].left_time < 500) {
-				//vcpu[vn].left_time = 0;
-			//}
+			vcpu[vn].left_time = (int64_t) (vcpu[vn].timeslice - vcpu[vn].counter);
+#if 1
+			if (vcpu[vn].counter >= (DIFF_USEC * 2)) {
+				//vcpu is not descheduled when it is sleep
+				if ((vcpu[vn].timeslice >= (DIFF_USEC * 2)) || 
+			   		(vcpu[vn].timeslice < DIFF_USEC)) {
+					//FIXME: hardcoded
+					vcpu[vn].timeslice = TIME_SLICE_INIT;
+				}
+				vcpu[vn].start_time = debug_time_monotonic_usec();
+				vcpu[vn].counter = 0;
+				vcpu[vn].left_time = vcpu[vn].timeslice;
+			}
+#endif
 		}
 		vcpu[vn].dead_ts = debug_time_monotonic_usec();
-
 #if 0
-		if ((vn == 2) && (sm->flag == 1)) {
-			DEBUG_CPU_BUF(0, vn, vcpu[vn].timeslice, vcpu[vn].counter, vcpu[vn].left_time, debug_time_monotonic_usec());
-			if (vcpu[vn].buf_counter == 100000) {
-				CPU_WRITE(2);
-			}
+		if ((sm->flag == 1) && (sm->counter > 0) && (_debug_flag == 0)) {
+			//if (_debug_flag == 0) {
+				DEBUG_CPU_BUF(0, vn, vcpu[vn].timeslice, vcpu[vn].counter, vcpu[vn].left_time, debug_time_monotonic_usec());
+				if (vcpu[vn].buf_counter >= 100000) {
+					CPU_WRITE(vn);
+					_debug_flag = 1;
+				}
+			//}
 		}
 #endif
-#if 1
-		if (sm->flag == 1) {
-			if (-1 != (_io_vn = get_pid_affinity(sm->pid))) {
-				if(vcpu[_io_vn].left_time <= (int64_t) 2000) {
-					io_vn = get_max_left_time();
-					if (vcpu[io_vn].left_time >= (int64_t) 3000) {
-						set_pid_affinity(io_vn, sm->pid);
-					}
-					if (vcpu[vn].left_time <= (int64_t) 600) {
-						if (vcpu[io_vn].left_time >= 1000) {
-							set_pid_affinity(io_vn, sm->pid);
-						} else {
-							io_vn = predict_one_vcpu();
-							set_pid_affinity(io_vn, sm->pid);
-						}
-					}
-				}
-			} /*else {
-				if (-1 != (_io_vn = get_pid_affinity(sm->pid))) {
-					if (vcpu[_io_vn].left_time <= 600) {
-						io_vn = get_max_left_time();
-						if (vcpu[io_vn].left_time >= (int64_t) 1000) {
-							set_pid_affinity(io_vn, sm->pid);
-						} else {
-							io_vn = predict_one_vcpu();
-							set_pid_affinity(io_vn, sm->pid);
-						}
-					}
-				}
-			}*/
+#if 0
+
+		if ((sm->flag == 1) && (sm->counter > 0)) {
+			tune_low_threshold();
+			migrate_blocked_io(vn);
+			distribute_io(vn);
+			do_migration();
 		}
 #endif
 	}
-		//printf("vCPU %lu's counter is %lu\n", vn, vcpu[vn].counter);
-#endif
 }
 
 void init_io_thread(void) {
@@ -993,7 +1384,7 @@ void create_vcpu_debug_files(int i) {
 void init_do_migrate_thread(void) {
 	uint64_t ret = 0;
 		
-	vcpu[0].vcpu_num = 0;
+	vcpu[0].vcpu_num = 1; //set migrater to dedicated vCPU 1
 	vcpu[0].counter = 0;
 	vcpu[0].start_time = 0;
 	vcpu[0].end_time = 0;
@@ -1049,20 +1440,18 @@ void init_cpu_thread(void) {
 	if (vcpu == NULL)
 		handle_error("malloc error!");
 
-	//init_io_thread();
 	for (i = start_vcpu; i < end_vcpu; i++) {
 	//XXX vCPU 0 is dedicated to handle all the interrupts
+	//FIXME: vCPU 1 is used to migrate I/O intensive threads
 		vcpu[i].vcpu_num = i;
 		vcpu[i].counter = 0;
 		vcpu[i].start_time = 0;
 		vcpu[i].end_time = 0;
-		vcpu[i].timeslice = 0;
+		vcpu[i].timeslice = TIME_SLICE_INIT;
 		vcpu[i].left_time = 0;
-		vcpu[i].io_counter = 0;
-		vcpu[i].deschedule_ts = 0;
 		vcpu[i].dead_ts = 0;
 #if defined MY_DEBUG_CPU_
-		vcpu[i].buf = (char *) malloc(sizeof(char) * SIZE * 200);
+		vcpu[i].buf = (char *) malloc(sizeof(char) * SIZE);
 		if (vcpu[i].buf == NULL)
 			handle_error("Malloc error!");
 		create_vcpu_debug_files(vcpu[i].vcpu_num);
@@ -1070,35 +1459,78 @@ void init_cpu_thread(void) {
 		vcpu[i].buf_len = 0;
 #endif
 		ret = pthread_create(&(p[i]), NULL, thread_func, &(vcpu[i].vcpu_num));
-		//ret = pthread_create(&(p[i]), NULL, thread_iofunc, &(vcpu[i].vcpu_num));
 		if (ret != 0) {
 			printf("Pthread create error!\n");
 			exit(EXIT_SUCCESS);
 		}
 	}
-	//sleep(5); //XXX: wait for timeslice thread to be ready.
-	//init_io_thread();
-	//init_worker_thread();
 	//if (sem_post(&sem_main) == -1) {
 	//	fprintf(stderr, "sem_post() failed\n");
 	//}
-	//usleep(100);
-	//init_do_migrate_thread();
+	sleep(3); //XXX: wait each monitor vCPU timeslice thread stable
+	init_do_migrate_thread();
 }
 
 void *_thread_func(void *arg) {
 	uint64_t vn = *((uint64_t *) arg);
+	uint64_t i = 0;
+	uint64_t io_vn = 0;
+	uint64_t start = 0;
+	uint64_t flag = 0;
+	uint64_t sum_flag = 0;
 	set_affinity(vn);
 	set_idle_priority();
 
 	vn = get_affinity();
 	printf("CPU daemon worker is on %lu\n", vn);
 	int pid = syscall(SYS_gettid);
-	//set_nice_priority(20, pid);
 	printf("CPU daemon worker thread PID number is %d\n", pid);
 
 	while(1) {
+		//printf("start is %lu, cpu_flag is %d, flag is %d\n", start, sm->cpu_flag, sm->flag);
+#if 1
 		_vcpu[vn].plus_one += 1;
+#else
+		if (sm->cpu_flag == 1) {
+			_vcpu[vn].plus_one += 1;
+		}
+		if ((vn == 1) && (sm->flag == 1) && (sm->cpu_flag == 0)) {
+			start = debug_time_monotonic_usec();
+			sm->cpu_flag = 1;
+		}
+		if ((vn == 1) && (sm->flag == 1) && (sm->cpu_flag == 1)) {
+			if (debug_time_monotonic_usec() - start >= 20000000) { //20s
+				sm->cpu_flag = 2;
+			}
+		}
+
+		if ((sm->cpu_flag == 2) && (flag == 0) && (vn != 1 || vn != 11)) {
+			pthread_mutex_lock(&main_mutex);
+			sum = sum + _vcpu[vn].plus_one;
+			sum_counter = sum_counter + 1;
+			pthread_mutex_unlock(&main_mutex);
+			flag = 1;
+		}
+		if (vn == 1 && sum_counter == 9 && sum_flag == 0) {
+			printf("sum counter is %ld\n", sum);
+			sum_flag = 1;
+		}
+#endif
+#if 0
+		if ((vn == 1) && (buf_flag == 0)) {
+			if ((sm->flag == 1) && (sm->counter > 0)) {
+				for (i = 0; i < sm->counter; i++) {
+					io_vn = get_pid_affinity((sm->io_thread[i]).pid);
+					DEBUG_CPU_BUF(i, io_vn, vcpu[io_vn].timeslice, vcpu[io_vn].counter, vcpu[io_vn].left_time, debug_time_monotonic_usec());
+					if (vcpu[2].buf_counter >= 100000 && vcpu[3].buf_counter >= 100000) {
+						CPU_WRITE(2);
+						CPU_WRITE(3);
+						buf_flag = 1;
+					}
+				}
+			}
+		}
+#endif
 	}
 }
 
@@ -1113,7 +1545,7 @@ void init_probe_thread(void) {
 	if (_vcpu == NULL)
 		handle_error("malloc error!");
 
-	for (i = start_vcpu; i < end_vcpu + 1; i++) {
+	for (i = start_vcpu - 1; i < end_vcpu + 1; i++) {
 	//XXX vCPU 0 is dedicated to handle all the interrupts
 		_vcpu[i].vcpu_num = i;
 		_vcpu[i].plus_one = 0;
@@ -1136,7 +1568,10 @@ void init_sem(void) {
 		handle_error("sem1_init_error");
 }
 
+#if defined VMIGRATER_SHARED_MEMORY
 void init_shared_mem(void) {
+	int i = 0;
+
 	if ((shmid = shmget(key, sizeof(struct shared_mem), IPC_CREAT | 0666)) < 0) {
 		handle_error("shmget error!\n");
 	}
@@ -1148,14 +1583,65 @@ void init_shared_mem(void) {
 	sm = (struct shared_mem *) shm;
 	sm->flag = 0;
 	sm->counter = 0;
-	sm->pid = 0;
+	sm->cpu_flag = 0;
+	sm->total_bytes = 0;
+	for (i = 0; i < MAX_NUM_IO; i++) {
+		(sm->io_thread[i]).pid = 0;
+		(sm->io_thread[i]).is_movable = 0;
+		(sm->io_thread[i]).is_finished = 0;
+		(sm->io_thread[i]).index = 0;
+		(sm->io_thread[i]).prev_left_time = 0;
+		(sm->io_thread[i]).curr_left_time = 0;
+		(sm->io_thread[i]).prev_ts = 0;
+	}
 }
+#endif
+
+void init_sorted_vcpu(void) {
+	sv = (struct sorted_vcpu *) malloc(sizeof(struct sorted_vcpu) * (end_vcpu - start_vcpu));
+	if (sv == NULL) handle_error("Malloc error!\n");
+}
+
+void free_resources(void) {
+	uint64_t i = 0;
+
+	//detach and destroy the shared memory
+#if defined VMIGRATER_SHARED_MEMORY
+	if (shmdt(shm) == -1) {
+		handle_error("Share memory detach error!\n");
+	}
+	shmctl(shmid, IPC_RMID, (struct shmid_ds *) NULL);
+#endif
+
+	if (sv != NULL) free(sv);
+	//if (_vcpu != NULL) free(_vcpu);
+	//if (_p != NULL) free(_p);
+
+#if defined MY_DEBUG_CPU_
+	for (i = start_vcpu; i < end_vcpu; i++) {
+		close(vcpu[i].cpu_fd);
+		if (vcpu[i].buf != NULL) free(vcpu[i].buf);
+	}
+#endif
+	if (vcpu != NULL) free(vcpu);
+	if (p != NULL) free(p);
+}
+
+void sig_handler(int signo) {
+	if (signo == SIGINT) {
+		printf("Free resource ...\n");
+		free_resources();
+	} else
+		handle_error("Signal Error!\n");
+
+	exit(EXIT_SUCCESS);
+}
+
 
 int main(int argc, char **argv) {
 	pid_t pid = getpid();
 	uint64_t vcpu_num = get_vcpu_count();
 	__vcpu_num = vcpu_num;
-	//vcpu_num = 4;
 	_vcpu_num = vcpu_num;
 	int i = 0;
 
@@ -1164,19 +1650,23 @@ int main(int argc, char **argv) {
 	//init_sem();
 	//init_register_task();
 
+#if defined VMIGRATER_SHARED_MEMORY
 	init_shared_mem();
-	init_probe_thread();
+#endif
+	init_sorted_vcpu();
+	init_low_threshold();
+	//init_probe_thread();
 	init_cpu_thread();
 
 
-	//pthread_join(pio, NULL);
-	for (i = start_vcpu; i < end_vcpu; i++) {
-		pthread_join(_p[i], NULL);
+	if (signal(SIGINT, sig_handler) == SIG_ERR) {
+		handle_error("SIGINT error!\n");
 	}
+	//for (i = start_vcpu - 1; i < end_vcpu + 1; i++) {
+	//	pthread_join(_p[i], NULL);
+	//}
 	for (i = start_vcpu; i < end_vcpu; i++) {
 		pthread_join(p[i], NULL);
 	}
-
-
 	return 0;
 }
