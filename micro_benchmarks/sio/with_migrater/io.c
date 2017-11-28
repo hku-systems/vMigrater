@@ -24,7 +24,7 @@
 #include <sched.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include "debug.h"
+#include "../debug.h"
 #include "glib-2.0/glib.h"
 #include <pthread.h>
 #include <assert.h>
@@ -57,6 +57,7 @@
 #define F_SIZE			(1ULL<<33ULL)
 //#define F_SIZE			(1ULL<<27ULL)
 #define EACH_SIZE		(1ULL<<12ULL)
+#define MAX_NUM_IO		(10ULL)
 
 #define handle_error_en(en, msg) \
 	do { errno = en; perror(msg); exit(EXIT_FAILURE); } while (0)
@@ -134,10 +135,23 @@ struct register_task {
 	char proc_path[1024];
 };
 
+struct io {
+	uint64_t pid;
+	uint64_t is_movable;
+	uint64_t is_finished;
+	uint64_t index;
+
+	int64_t prev_left_time;
+	int64_t curr_left_time;
+	uint64_t prev_ts;
+};
+
 struct shared_mem {
-	int pid;
 	int counter;
+	int cpu_flag;
 	int flag;
+	uint64_t total_bytes;
+	struct io io_thread[MAX_NUM_IO];
 };
 
 static struct vcpu *vcpu;
@@ -154,7 +168,7 @@ static pthread_t pio;
 static struct register_task rt;
 static uint64_t cpu_sleep_counter = 0;
 
-key_t key = 99999;                                                      
+key_t key = 99996;                                                      
 int shmid;                                                              
 char *shm;                                                              
 struct shared_mem *sm;
@@ -272,7 +286,7 @@ void do_iofunc(void) {
 	uint64_t io_vn = 0;
 	uint64_t _io_vn = 0;
 	uint64_t vn;
-	uint64_t counter = 0;
+	int64_t counter = 0;
 	struct ts ts;
 	uint64_t flag = 0;
 	uint64_t s;
@@ -289,7 +303,7 @@ void do_iofunc(void) {
 	//XXX Must set since the I/O thread would be pinned to that vCPU.
 	//j = 0;
 	//set_priority();
-	set_pid_affinity(1, pid);
+	set_pid_affinity(5, pid);
 	j = 2;
 	io_vn = 0;
 	uint64_t _i = 0;
@@ -321,10 +335,19 @@ void do_iofunc(void) {
 		//}
 
 #if 1
+		sm->total_bytes += EACH_SIZE;
+
+		//if (sm->cpu_flag == 1) {
 		while (think_time != 4000) {
 			think_time += 1;
 		}
+			//counter += 4000;
 		think_time = 0;
+		//}
+		//if ((sm->cpu_flag == 2) && (flag == 0)) {
+		//	printf("I/O thread counter is %ld\n", counter);
+		//	flag = 1;
+		//}
 #endif
 
 		//i = i - EACH_SIZE;
@@ -333,7 +356,6 @@ void do_iofunc(void) {
 	}
 	diff = debug_time_monotonic_usec() - start;
 	printf("diff is %lu\n", diff);
-	printf("counter is %lu\n", counter);
 	printf("mcounter is %lu, _mounter is %lu\n", mcounter, _mcounter);
 	printf("cpu_sleep_counter is %lu\n", cpu_sleep_counter);
 #if defined TEST_TIO_MIGRATION
@@ -369,23 +391,35 @@ void init_shared_mem(void) {
 	}
 
 	sm = (struct shared_mem *) shm;
-	sm->pid = pid;
+
+	(sm->io_thread[sm->counter]).index = sm->counter;
+	(sm->io_thread[sm->counter]).pid = pid;
 	sm->flag = 1;
-	sm->counter = 1;
+	printf("index is %lu, pid is %lu, counter is %d, flag is %d\n",
+			(sm->io_thread[sm->counter]).index,
+			(sm->io_thread[sm->counter]).pid,
+			sm->counter, sm->flag);
+	sm->counter += 1;
 }
 
 int main(int argc, char **argv) {
 	pid = getpid();
 	uint64_t vcpu_num = get_vcpu_count();
 	__vcpu_num = vcpu_num;
-	//vcpu_num = 4;
-	//_vcpu_num = vcpu_num;
+	vcpu_num = 4;
+	_vcpu_num = vcpu_num;
 	int i = 0;
 
-	printf("vCPU number is %lu\n", vcpu_num);
+	printf("vCPU number is %lu\n", _vcpu_num);
 	printf("Process ID number is %d\n", pid);
 	init_shared_mem();
 	init_io_thread();
+
+	(sm->io_thread[(sm->io_thread[sm->counter]).index]).is_finished = 1;
+	sm->counter -= 1;
+	if(shmdt(shm) == -1) {
+		handle_error("Share memory detach error!\n");
+	}
 
 	//pthread_join(pio, NULL);
 

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 gcc main.c ../debug.c -o main -lpthread -lglib-2.0
-#gcc io.c debug.c -o io -lpthread -lglib-2.0
+gcc io.c ../debug.c -o io -lpthread -lglib-2.0
 #gcc io_bursty.c debug.c -o io_bursty -lpthread -lglib-2.0
 #gcc io_random.c debug.c -o io_random -lpthread -lglib-2.0
 #gcc io_random_bursty.c debug.c -o io_random_bursty -lpthread -lglib-2.0
