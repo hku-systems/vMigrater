@@ -1352,7 +1352,7 @@ void *thread_func(void *arg) {
 			//}
 		}
 #endif
-#if 1
+#if 0
 
 		if ((sm->flag == 1) && (sm->counter > 0)) {
 			//tune_low_threshold();
@@ -1490,8 +1490,8 @@ void init_cpu_thread(void) {
 	//if (sem_post(&sem_main) == -1) {
 	//	fprintf(stderr, "sem_post() failed\n");
 	//}
-	sleep(3); //XXX: wait each monitor vCPU timeslice thread stable
-	init_do_migrate_thread();
+	//sleep(3); //XXX: wait each monitor vCPU timeslice thread stable
+	//init_do_migrate_thread();
 }
 
 void *_thread_func(void *arg) {
@@ -1633,7 +1633,8 @@ void free_resources(void) {
 	if (shmdt(shm) == -1) {
 		handle_error("Share memory detach error!\n");
 	}
-	shmctl(shmid, IPC_RMID, (struct shmid_ds *) NULL);
+	//shmctl(shmid, IPC_RMID, (struct shmid_ds *) NULL);
+	shmctl(shmid, IPC_RMID, NULL);
 #endif
 
 	if (sv != NULL) free(sv);
