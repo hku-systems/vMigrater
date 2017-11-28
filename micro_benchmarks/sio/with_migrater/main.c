@@ -1239,6 +1239,18 @@ void migrate_blocked_io(uint64_t vn) {
 	set_prev_left_time();
 }
 
+void naive_migrater(uint64_t vn) {
+	uint64_t i = 0;
+	uint64_t io_vn = 0;
+
+	for(i = 0; i < sm->counter; i++) {
+		io_vn = get_pid_affinity((sm->io_thread[i]).pid);
+		//if ((io_vn != vn) && (vcpu[io_vn].left_time < low_threshold_curr))
+		if (io_vn != vn)
+			set_pid_affinity(vn, (sm->io_thread[i]).pid);
+	}
+}
+
 void *thread_func(void *arg) {
 	uint64_t vn = *((uint64_t *) arg);
 	set_affinity(vn);
@@ -1289,9 +1301,10 @@ void *thread_func(void *arg) {
 
 #if defined ENABLE_VMIGRATER
 			if ((sm->flag == 1) && (sm->counter > 0)) {
-				migrate_blocked_io(vn);
-				distribute_io(vn);
-				do_migration();
+				naive_migrater(vn);
+				//migrate_blocked_io(vn);
+				//distribute_io(vn);
+				//do_migration();
 			}
 #endif
 		} else {
@@ -1461,8 +1474,8 @@ void init_cpu_thread(void) {
 	//if (sem_post(&sem_main) == -1) {
 	//	fprintf(stderr, "sem_post() failed\n");
 	//}
-	sleep(3); //XXX: wait each monitor vCPU timeslice thread stable
-	init_do_migrate_thread();
+	//sleep(3); //XXX: wait each monitor vCPU timeslice thread stable
+	//init_do_migrate_thread();
 }
 
 void *_thread_func(void *arg) {
