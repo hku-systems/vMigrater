@@ -88,11 +88,11 @@ uint64_t period_start = 0;
 uint64_t period_flag = 0;
 
 //for low_threshold (in microseconds)
-int64_t low_threshold = 5000LL;
+int64_t low_threshold = 3000LL;
 int64_t low_threshold_minus = 0;
 int64_t low_threshold_middle = 0;
 int64_t low_threshold_plus = 0;
-int64_t low_threshold_curr = 5000LL;
+int64_t low_threshold_curr = 8000LL;
 uint64_t low_threshold_minus_performance = 0;
 uint64_t low_threshold_middle_performance = 0;
 uint64_t low_threshold_plus_performance = 0;
@@ -999,7 +999,7 @@ void cal_movable(void) {
 //					printf("I/O thread %lu on vCPU %lu left time is %ld\n", i, io_vn, vcpu[io_vn].left_time);
 //					debug_flag += 1;
 //				}
-				if (vcpu[io_vn].left_time <= low_threshold_curr) {
+				if (vcpu[io_vn].left_time <= low_threshold) {
                     (sm->io_thread[i]).is_movable = 1;
 					_num_movable += 1;
 				} else {
@@ -1127,6 +1127,21 @@ void do_migration(void) {
 	//distribute_io();
 }
 
+void do_naive_migration(void) {
+	uint64_t i = 0;
+	uint64_t io_vn = 0;
+
+	for(i = 0; i < sm->counter; i++) {
+		io_vn = get_pid_affinity((sm->io_thread[i]).pid);
+		if (vcpu[io_vn].left_time < low_threshold) {
+			sort_vcpu();
+			if (sv[0].io_vn != io_vn)
+				set_pid_affinity(sv[0].io_vn, ((sm->io_thread[i]).pid));
+		}
+	}
+
+}
+
 void *do_migrate(void *arg) {
 	uint64_t vn = *((uint64_t *) arg);
 	set_affinity(vn);
@@ -1173,7 +1188,8 @@ void *do_migrate(void *arg) {
 #if defined ENABLE_VMIGRATER
 	//XXX: PUSH I/O intensive threads to scheduled vCPUs
 	if ((sm->flag == 1) && (sm->counter > 0)) {
-		do_migration();
+		//do_migration();
+		do_naive_migration();
 	}
 #endif
 #endif
@@ -1336,13 +1352,13 @@ void *thread_func(void *arg) {
 			//}
 		}
 #endif
-#if 0
+#if 1
 
 		if ((sm->flag == 1) && (sm->counter > 0)) {
-			tune_low_threshold();
+			//tune_low_threshold();
 			migrate_blocked_io(vn);
-			distribute_io(vn);
-			do_migration();
+			//distribute_io(vn);
+			//do_migration();
 		}
 #endif
 	}
@@ -1474,8 +1490,8 @@ void init_cpu_thread(void) {
 	//if (sem_post(&sem_main) == -1) {
 	//	fprintf(stderr, "sem_post() failed\n");
 	//}
-	//sleep(3); //XXX: wait each monitor vCPU timeslice thread stable
-	//init_do_migrate_thread();
+	sleep(3); //XXX: wait each monitor vCPU timeslice thread stable
+	init_do_migrate_thread();
 }
 
 void *_thread_func(void *arg) {
