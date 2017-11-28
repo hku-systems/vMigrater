@@ -1,0 +1,47 @@
+
+kvm1@kvm1:~/vMigrater/motivation/vcpu.shared.vMigrater$ ./io
+vCPU number is 4
+Process ID number is 30993
+index is 0, pid is 30993, counter is 0, flag is 1
+I/O process ID number is 30993
+I/O thread on vCPU 3
+diff is 16702787
+mcounter is 0, _mounter is 0
+cpu_sleep_counter is 0
+With migration, I/O throughput is 490.457072 MB/s.
+
+
+kvm1@kvm1:~/vMigrater/motivation/vcpu.shared.vMigrater$ ./io
+vCPU number is 4
+Process ID number is 31185
+index is 0, pid is 31185, counter is 0, flag is 1
+I/O process ID number is 31185
+I/O thread on vCPU 3
+diff is 16815858
+mcounter is 0, _mounter is 0
+cpu_sleep_counter is 0
+With migration, I/O throughput is 487.159204 MB/s.
+
+kvm1@kvm1:~/vMigrater/motivation/vcpu.shared.vMigrater$ ./io_ran
+vCPU number is 4
+Process ID number is 31616
+index is 0, pid is 31616, counter is 0, flag is 1
+I/O process ID number is 31616
+I/O thread on vCPU 5
+diff is 22809563
+mcounter is 0, _mounter is 0
+cpu_sleep_counter is 0
+With migration, I/O throughput is 44.893451 MB/s.
+
+
+kvm1@kvm1:~/vMigrater/motivation/vcpu.shared.vMigrater$ ./io_ran
+vCPU number is 4
+Process ID number is 31680
+index is 0, pid is 31680, counter is 0, flag is 1
+I/O process ID number is 31680
+I/O thread on vCPU 5
+diff is 20787732
+mcounter is 0, _mounter is 0
+cpu_sleep_counter is 0
+With migration, I/O throughput is 49.259823 MB/s.
+

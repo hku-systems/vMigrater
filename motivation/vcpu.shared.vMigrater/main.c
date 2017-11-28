@@ -25,7 +25,7 @@
 #include <sched.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include "../debug.h"
+#include "../../debug.h"
 #include "glib-2.0/glib.h"
 #include <pthread.h>
 #include <assert.h>
@@ -88,7 +88,7 @@ uint64_t period_start = 0;
 uint64_t period_flag = 0;
 
 //for low_threshold (in microseconds)
-int64_t low_threshold = 6000LL;
+int64_t low_threshold = 3000LL;
 int64_t low_threshold_minus = 0;
 int64_t low_threshold_middle = 0;
 int64_t low_threshold_plus = 0;
@@ -1490,8 +1490,8 @@ void init_cpu_thread(void) {
 	//if (sem_post(&sem_main) == -1) {
 	//	fprintf(stderr, "sem_post() failed\n");
 	//}
-	sleep(3); //XXX: wait each monitor vCPU timeslice thread stable
-	init_do_migrate_thread();
+	//sleep(3); //XXX: wait each monitor vCPU timeslice thread stable
+	//init_do_migrate_thread();
 }
 
 void *_thread_func(void *arg) {
