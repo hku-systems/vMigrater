@@ -12,6 +12,7 @@
 #define DEBUG_CPU_TS_ONLINE
 /*VMIGRATER_SHARED_MEMORY: used to get I/O intensive thread pid*/
 //#define VMIGRATER_SHARED_MEMORY 
+#define ENABLE_VMIGRATER
 #include <sys/signalfd.h>
 #include <signal.h>
 #include <errno.h>
@@ -91,7 +92,7 @@ int64_t low_threshold = 5000LL;
 int64_t low_threshold_minus = 0;
 int64_t low_threshold_middle = 0;
 int64_t low_threshold_plus = 0;
-int64_t low_threshold_curr = 0;
+int64_t low_threshold_curr = 5000LL;
 uint64_t low_threshold_minus_performance = 0;
 uint64_t low_threshold_middle_performance = 0;
 uint64_t low_threshold_plus_performance = 0;
@@ -840,20 +841,12 @@ void *do_migrate(void *arg) {
 	}
 	break;
 #else
-	//TODO: PUSH I/O intensive threads to scheduled vCPUs
-		if (0 == is_cpu_running(2lu) && flag == 0) {
-			flag = 1;
-			diff = debug_time_monotonic_usec() - start;
-			//printf("diff is %lu\n", diff);
-			DEBUG_CPU_BUF(0, 2, diff, 0, 0, debug_time_monotonic_usec());
-		}
-		if (1 == is_cpu_running(2lu) && flag == 1) {
-			flag = 0;
-			start = debug_time_monotonic_usec();
-		}
-		//if (vcpu[1].buf_counter == 10000) {
-		//	CPU_WRITE(1);
-		//}
+#if defined ENABLE_VMIGRATER
+	//XXX: PUSH I/O intensive threads to scheduled vCPUs
+	if ((sm->flag == 1) && (sm->counter > 0)) {
+		do_migration();
+	}
+#endif
 #endif
 	}
 }
@@ -1294,7 +1287,7 @@ void *thread_func(void *arg) {
 			vcpu[vn].left_time = (int64_t) vcpu[vn].timeslice;
 			vcpu[vn].start_time = debug_time_monotonic_usec();
 
-#if 0
+#if defined ENABLE_VMIGRATER
 			if ((sm->flag == 1) && (sm->counter > 0)) {
 				migrate_blocked_io(vn);
 				distribute_io(vn);
