@@ -1,0 +1,13 @@
+TO BE CONSIDERED:
+
+Condition 1: 8 I/O threads running on one pCPU (or dedicated vCPU) and their I/O patterns are reading 4 KB and then
+doing some computations (add counter for 4000 times, about 10 us), while loop for this pattern.
+
+
+Condition 2: 8 I/O threads running on shared vCPUs with vMigrater and their I/O patterns are reading 4 KB and then
+doing some computations (add counter for 4000 times, about 10 us), while loop for this pattern.
+
+
+Condition 2 has better performance than condition one, which might be because in condition 1, the dedicated
+vCPU might be overloaded due to 8 I/O threads are doing computation at the same time. However, in condition
+2, this problem will be solved since 8 I/O threads will be distributed to each running vCPU averagely by vMigrater.
