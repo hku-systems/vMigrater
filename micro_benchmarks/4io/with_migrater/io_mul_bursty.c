@@ -24,7 +24,7 @@
 #include <sched.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include "debug.h"
+#include "../debug.h"
 #include "glib-2.0/glib.h"
 #include <pthread.h>
 #include <assert.h>
@@ -54,7 +54,7 @@
 #define CPU_DEBUG4		"D_CPU_4"
 #define FNA				"/home/kvm1/sda2/testA"
 #define FNB				"/home/kvm1/sda3/testB"
-#define F_SIZE			(1ULL<<30ULL)
+#define F_SIZE			(1ULL<<27ULL)
 //#define F_SIZE			(1ULL<<27ULL)
 #define EACH_SIZE		(1ULL<<12ULL)
 #define MAX_NUM_IO		(1000ULL)
@@ -68,7 +68,7 @@
 	do { perror(msg); exit(EXIT_FAILURE); } while (0)
 
 uint64_t start_vcpu = 2ULL;
-uint64_t end_vcpu = 11ULL;
+uint64_t end_vcpu = 8ULL;
 
 struct buf {
 	uint64_t vcpu_num;
@@ -295,6 +295,7 @@ void *do_iofunc(void *arg) {
 	uint64_t counter = 0;
 	struct ts ts;
 	uint64_t flag = 0;
+	uint64_t bursty = 0;
 	uint64_t s;
 	int pid;
 
@@ -303,7 +304,6 @@ void *do_iofunc(void *arg) {
 	uint64_t _diff;
 	int64_t think_time = 0;
 	uint64_t index;
-	uint64_t bursty = 0;
 	if (_wj->num == 0) {
 		i = 0;
 	} else if (_wj->num == 1) {
@@ -377,7 +377,7 @@ void *do_iofunc(void *arg) {
 		//i = i - EACH_SIZE;
 		i = i + EACH_SIZE;
 		_i = _i + EACH_SIZE;
-		bursty = bursty + EACH_SIZE;
+		bursty += EACH_SIZE;
 		memset(buf, '\0', EACH_SIZE + 1);
 	}
 	diff = debug_time_monotonic_usec() - start;

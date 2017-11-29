@@ -24,7 +24,7 @@
 #include <sched.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include "debug.h"
+#include "../debug.h"
 #include "glib-2.0/glib.h"
 #include <pthread.h>
 #include <assert.h>
@@ -156,6 +156,7 @@ struct io {
 
 struct shared_mem {
 	int counter;
+	int cpu_flag;
 	int flag;
 	uint64_t total_bytes;
 	struct io io_thread[MAX_NUM_IO];
@@ -376,7 +377,7 @@ void *do_iofunc(void *arg) {
 		sm->total_bytes += EACH_SIZE;
 		pthread_mutex_unlock(&worker_mutex);
 
-		while (think_time != 40000) { //200us
+		while (think_time != 4000) { //200us
 			think_time += 1;
 		}
 		think_time = 0;
