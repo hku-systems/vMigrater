@@ -16,7 +16,7 @@
 	#/usr/bin/taskset -c 6 /usr/bin/sysbench --test=fileio --max-time=30 --max-requests=0 --file-total-size=8GB --num-threads=$2 --file-test-mode=rndrw run
 	#/usr/bin/taskset -c $1 /usr/bin/sysbench --test=oltp --oltp-table-size=1000000 --mysql-db=test --mysql-user=root --mysql-password=123 --max-time=60 --oltp-read-only=on --max-requests=0 --num-threads=$2 run
 	#client 1000 users and each send a total of 
-	/usr/bin/taskset -c 6 /usr/bin/siege --quiet --concurrent=$1 --time=300s --log=./siege.log 192.168.122.95
+	/usr/bin/taskset -c 1 /usr/bin/siege --quiet --concurrent=$1 --time=60s --log=./siege.log 192.168.122.95
 	echo "============> siege end===============>"
 	#sysbench --test=oltp --mysql-db=test --mysql-user=root --mysql-password=123 cleanup
 	#/usr/bin/sysbench --test=fileio --file-total-size=10G cleanup
