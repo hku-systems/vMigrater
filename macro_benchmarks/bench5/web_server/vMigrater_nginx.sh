@@ -6,8 +6,8 @@ if [ "$1" == "1" ]
 then
 	#echo "sysbench main process id is $process_id1"
 	#echo "sysbench I/O process id is $process_id"
-	let process_id1=($process_id + 2)
-	./main $process_id1
+	#let process_id1=($process_id + 2)
+	./main $2 $3 $4 $5 $6
 elif [ "$1" == "2" ]
 then
 	let process_id1=($process_id + 2)
