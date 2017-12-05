@@ -1,0 +1,172 @@
+define([sockperf_version], esyscmd([sh -c "head -1 ./build/current-version | tr -d '\n'"]))
+AC_INIT([SOCKPERF], [sockperf_version], [http://github.com/mellanox/sockperf/issues])
+
+AC_CONFIG_HEADER([config.h])
+AC_CONFIG_MACRO_DIR([config/m4])
+AC_CONFIG_AUX_DIR([config/aux])
+
+# Determine the host system
+AC_CANONICAL_SYSTEM
+
+TARGETDIR="unknown"
+case "$host" in
+ 
+  i?86-*-*) TARGET=X86; TARGETDIR=x86;;
+  ia64*-*-*) TARGET=IA64; TARGETDIR=ia64;;
+  powerpc*-*-linux* | powerpc-*-sysv*) TARGET=POWERPC; TARGETDIR=powerpc;;
+  arm*-*-linux*) TARGET=ARM; TARGETDIR=arm;;
+  powerpc-*-beos*) TARGET=POWERPC; TARGETDIR=powerpc;;
+  powerpc-*-darwin*) TARGET=POWERPC_DARWIN; TARGETDIR=powerpc;;
+  powerpc-*-aix* | rs6000-*-aix*) TARGET=POWERPC_AIX; TARGETDIR=powerpc;;
+  powerpc-*-freebsd*) TARGET=POWERPC_FREEBSD; TARGETDIR=powerpc;;
+  powerpc*-*-rtems*) TARGET=POWERPC; TARGETDIR=powerpc;;
+  x86_64-*-*) TARGET=X86_64; TARGETDIR=x86;;
+  amd64-*-freebsd*) TARGET=FREEBSD; TARGETDIR=x86;;
+  i386-*-freebsd*) TARGET=FREEBSD; TARGETDIR=x86;;
+  aarch64-*-*) TARGET=AARCH64; TARGETDIR=aarch64;;
+  s390*-*-*) TARGET=S390; TARGETDIR=s390;;
+esac
+ 
+AC_SUBST(AM_RUNTESTFLAGS)
+AC_SUBST(AM_LTLDFLAGS)
+ 
+if test $TARGETDIR = unknown; then
+  AC_MSG_ERROR(["it has not been ported to $host."])
+fi
+ 
+AM_CONDITIONAL(X86, test x$TARGET = xX86)
+AM_CONDITIONAL(IA64, test x$TARGET = xIA64)
+AM_CONDITIONAL(POWERPC, test x$TARGET = xPOWERPC)
+AM_CONDITIONAL(ARM, test x$TARGET = xARM)
+AM_CONDITIONAL(POWERPC_AIX, test x$TARGET = xPOWERPC_AIX)
+AM_CONDITIONAL(POWERPC_DARWIN, test x$TARGET = xPOWERPC_DARWIN)
+AM_CONDITIONAL(POWERPC_FREEBSD, test x$TARGET = xPOWERPC_FREEBSD)
+AM_CONDITIONAL(FREEBSD, test x$TARGET = xFREEBSD)
+AM_CONDITIONAL(AARCH64, test x$TARGET = xAARCH64)
+AM_CONDITIONAL(S390, test x$TARGET = xS390)
+
+AC_SUBST(TARGET)
+AC_SUBST(TARGETDIR)
+
+#########
+# Locate a compiler for the build machine. This compiler should
+# generate command-line programs that run on the build machine.
+#
+if test x"$cross_compiling" = xyes; then
+    AC_MSG_NOTICE([Enable cross compiling on ${build_cpu} for ${host_cpu}])
+#prefix=${prefix}/${host_cpu}
+fi
+
+AM_INIT_AUTOMAKE([foreign subdir-objects -Wall])
+AM_MAINTAINER_MODE
+
+#####################################
+# check for C++ preprocessor and compiler
+#
+: ${CXXFLAGS="-O3 -g"}
+AC_PROG_CXX
+AC_LANG(C++)
+#AC_PROG_LIBTOOL
+
+SP_CHECK_CXXFLAGS_APPEND([OUR_CXXFLAGS], [\
+                         -Wall \
+                         "--param inline-unit-growth=200"])
+
+##########################
+# Documentation
+#
+SP_ARG_ENABLE_BOOL(
+    [doc],
+    AC_HELP_STRING([--enable-doc],
+                   [SOCKPERF: create documentation with doxygen in html and unix-man (default=no)]))
+AS_IF([test "x$have_doc" = "xyes"], [
+       # Checks for doxygen
+       AC_PATH_PROG(DOXYGEN, doxygen, ,$PATH:/usr/local/bin:/usr/bin)
+       AS_IF([test -z "$DOXYGEN"],
+	     [AC_MSG_ERROR([Building of doc requested, but doxygen not found])])])
+AM_CONDITIONAL(DOC, test "x$have_doc" = "xyes")
+
+
+##########################
+# Enable tests 
+#
+SP_ARG_ENABLE_BOOL(
+    [test],
+    AC_HELP_STRING([--enable-test],
+                   [SOCKPERF: compile tests (default=no)]))
+AM_CONDITIONAL(TEST, test "x$have_test" = "xyes")
+
+
+##########################
+# Enable tools 
+#
+SP_ARG_ENABLE_BOOL(
+    [tool],
+    AC_HELP_STRING([--enable-tool],
+                   [SOCKPERF: compile utilities (default=no)]))
+AM_CONDITIONAL(TOOL, test "x$have_tool" = "xyes")
+
+
+##########################
+# Enable debug build
+#
+SP_ARG_ENABLE_BOOL(
+    [debug],
+    AC_HELP_STRING([--enable-debug],
+                   [SOCKPERF: turn on debugging (default=no)]))
+AS_IF([test "x$have_debug" = "xyes"],
+      [AC_DEFINE([DEBUG],  [], [Enable debugging])],
+      [AC_DEFINE([NDEBUG], [], [Disable debugging])])
+
+
+##########################
+# Enable build 32bit
+#
+SP_ARG_ENABLE_BOOL(
+    [build32],
+    AC_HELP_STRING([--enable-build32],
+		   [SOCKPERF: force build 32bit (default=no)]))
+AS_IF([test "x$have_build32" = "xyes"], [
+      SP_CHECK_CXXFLAG_APPEND([OUR_CXXFLAGS], [-m32],
+                              [AC_MSG_ERROR([32bit build requested, but -m32 compiler flag does not work])])])
+
+AC_SUBST([OUR_CXXFLAGS])
+
+#####################################
+# Checks for header files.
+#
+AC_HEADER_STDC
+AC_CHECK_HEADERS(
+    [arpa/inet.h fcntl.h netinet/in.h stdint.h stdlib.h \
+    string.h sys/ioctl.h sys/socket.h sys/time.h syslog.h \
+    termios.h unistd.h])
+
+
+#####################################
+# Checks for libraries.
+#
+AC_HEADER_STDC
+AC_SEARCH_LIBS([clock_gettime], [rt], [], AC_MSG_ERROR([librt not found]))
+AC_SEARCH_LIBS([pthread_create], [pthread], [], AC_MSG_ERROR([libpthread not found]))
+AC_SEARCH_LIBS([backtrace], [execinfo], [], AC_MSG_ERROR([libexecinfo not found]))
+AC_SEARCH_LIBS([dlsym], [dl], [], AC_MSG_ERROR([libdl not found]))
+
+AC_CONFIG_FILES([Makefile tools/Makefile tests/Makefile doc/Doxyfile])
+
+AC_OUTPUT
+
+AC_MSG_RESULT([
+	${PACKAGE} ${VERSION}
+
+	prefix:		${prefix}
+
+	compiler:	${CXX}
+	cppflags:	${CPPFLAGS}
+	cxxflags:	${OUR_CXXFLAGS} ${CXXFLAGS}
+	ldflags:	${LDFLAGS}
+
+	doc:		${have_doc}
+	test:		${have_test}
+	tool:		${have_tool}
+	debug:		${have_debug}
+])
