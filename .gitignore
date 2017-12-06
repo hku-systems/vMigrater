@@ -4,3 +4,4 @@ tags
 # Build artifacts
 /build/
 .*
+/bin/
