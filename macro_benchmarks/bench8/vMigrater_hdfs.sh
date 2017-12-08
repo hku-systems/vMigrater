@@ -11,7 +11,7 @@ cd /proc/$process_id/task/
 #files=*
 echo *
 
-./main *
+/home/kvm1/vMigrater/macro_benchmarks/bench8/main *
 
 #total=${#files[*]}
 
