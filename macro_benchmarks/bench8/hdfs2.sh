@@ -8,7 +8,7 @@ cd /proc/$process_id/task
 
 for entry in *
 do
-	sudo taskset -pc 1 $entry
+	sudo taskset -pc $1 $entry
 done
 
 
