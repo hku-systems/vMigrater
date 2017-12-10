@@ -1,0 +1,12 @@
+
+pm>show
+Current configuration is:
+The base number of files is 10000
+Transactions: 1000000
+Files range between 1000 bytes and 24.41 kilobytes in size
+Working directory: /home/kvm1/test
+Block sizes are: read=4.00 kilobytes, write=4.00 kilobytes
+Biases are: read/append=9, create/delete=5
+Using Unix buffered file I/O
+Random number generator seed is 42
+Report format is verbose.
