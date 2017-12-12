@@ -1,0 +1,43 @@
+On dedicated VM
+==========================
+
+kvm1@kvm1:~/bcc/vMigrater/motivation/vcpu.dedicated$ ./bin/seq_read 
+CPU number is 9
+Process ID number is 4150
+I/O process ID number is 4150
+I/O thread on VCPU 3
+Sequential reading 8.000000 GB needs 15696326 microseconds.
+Sequential read 8.000000 GB, I/O throughput is 521.905572 MB/s.
+CPU number is 9
+Process ID number is 4214
+I/O process ID number is 4214
+I/O thread on VCPU 3
+Sequential reading 8.000000 GB needs 15718229 microseconds.
+Sequential read 8.000000 GB, I/O throughput is 521.178308 MB/s.
+CPU number is 9
+Process ID number is 4237
+I/O process ID number is 4237
+I/O thread on VCPU 3
+Sequential reading 8.000000 GB needs 15715349 microseconds.
+Sequential read 8.000000 GB, I/O throughput is 521.273820 MB/s.
+
+
+kvm1@kvm1:~/bcc/vMigrater/motivation/vcpu.dedicated$ ./run.sh 
+CPU number is 9
+Process ID number is 4346
+I/O process ID number is 4346
+I/O thread on VCPU 3
+Sequential reading 8.000000 GB needs 161142783 microseconds.
+Sequential read 8.000000 GB, I/O throughput is 50.836903 MB/s.
+CPU number is 9
+Process ID number is 4403
+I/O process ID number is 4403
+I/O thread on VCPU 3
+Sequential reading 8.000000 GB needs 161311343 microseconds.
+Sequential read 8.000000 GB, I/O throughput is 50.783782 MB/s.
+CPU number is 9
+Process ID number is 4432
+I/O process ID number is 4432
+I/O thread on VCPU 3
+Sequential reading 8.000000 GB needs 160932359 microseconds.
+Sequential read 8.000000 GB, I/O throughput is 50.903374 MB/s.

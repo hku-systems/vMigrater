@@ -1,0 +1,55 @@
+wj47@sysmen:~/workshop1/bcc/vMigrater/motivation/pcpu > ./pcpu.sh 
+memsize is 134814593024
+count is 32913719
+./pcpu.sh: line 4: 151590 Killed                  ./bin/flush
+CPU number is 16
+Process ID number is 151592
+I/O process ID number is 151592
+I/O thread on PCPU 11
+Sequential reading 8.000000 GB needs 26653351 microseconds.
+Sequential read 8.000000 GB, I/O throughput is 307.353473 MB/s.
+memsize is 134814593024
+count is 32913719
+./pcpu.sh: line 6: 151593 Killed                  ./bin/flush
+CPU number is 16
+Process ID number is 151596
+I/O process ID number is 151596
+I/O thread on PCPU 11
+Sequential reading 8.000000 GB needs 27004275 microseconds.
+Sequential read 8.000000 GB, I/O throughput is 303.359376 MB/s.
+memsize is 134814593024
+count is 32913719
+./pcpu.sh: line 8: 151598 Killed                  ./bin/flush
+CPU number is 16
+Process ID number is 151600
+I/O process ID number is 151600
+I/O thread on PCPU 11
+Sequential reading 8.000000 GB needs 26679922 microseconds.
+Sequential read 8.000000 GB, I/O throughput is 307.047374 MB/s.
+memsize is 134814593024
+count is 32913719
+./pcpu.sh: line 12: 151601 Killed                  ./bin/flush
+CPU number is 16
+Process ID number is 151605
+I/O process ID number is 151605
+I/O thread on PCPU 11
+Sequential reading 8.000000 GB needs 258505386 microseconds.
+Sequential read 8.000000 GB, I/O throughput is 31.689862 MB/s.
+memsize is 134814593024
+count is 32913719
+./pcpu.sh: line 14: 151611 Killed                  ./bin/flush
+CPU number is 16
+Process ID number is 151613
+I/O process ID number is 151613
+I/O thread on PCPU 11
+Sequential reading 8.000000 GB needs 258373821 microseconds.
+Sequential read 8.000000 GB, I/O throughput is 31.705999 MB/s.
+memsize is 134814593024
+count is 32913719
+./pcpu.sh: line 16: 151619 Killed                  ./bin/flush
+CPU number is 16
+Process ID number is 151622
+I/O process ID number is 151622
+I/O thread on PCPU 11
+Sequential reading 8.000000 GB needs 260268116 microseconds.
+Sequential read 8.000000 GB, I/O throughput is 31.475235 MB/s.
