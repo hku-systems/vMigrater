@@ -3,5 +3,5 @@
 for (( i=0; i<=$1; i++))
 do
 	echo "Set vCPU $i"
-	taskset -c $i ./cpu
+	taskset -c $i ./cpu &
 done
