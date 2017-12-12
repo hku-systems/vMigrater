@@ -3,6 +3,7 @@ tags
 
 # Build artifacts
 /build/
+/results/
 .*
 /bin/
 *.o

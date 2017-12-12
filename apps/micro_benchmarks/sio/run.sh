@@ -1,120 +1,89 @@
 #!/bin/bash
 
-echo ">>>>>>>>>>>>>>>>>>>Sequential read, dedicated"
-
-../../scripts/umount.sh
-../../scripts/mount.sh
-./sio_seq 1
-
-../../scripts/umount.sh
-../../scripts/mount.sh
-./sio_seq 1
-
-../../scripts/umount.sh
-../../scripts/mount.sh
-./sio_seq 1
+BIN_DIR=/home/kvm1/vMigrater/apps/micro_benchmarks/sio
 
 
-echo ">>>>>>>>>>>>>>>>>>>>Sequential read, shared"
 
-../../scripts/umount.sh
-../../scripts/mount.sh
-./sio_seq 5
+echo ">>>>>>>>>>>>>>>>>>>Sequential read, dedicated" >> $2
+$1/umount.sh
+$1/mount.sh
+$BIN_DIR/sio_seq 1 >> $2
 
-../../scripts/umount.sh
-../../scripts/mount.sh
-./sio_seq 5
-
-../../scripts/umount.sh
-../../scripts/mount.sh
-./sio_seq 5
+$1/umount.sh
+$1/mount.sh
+$BIN_DIR/sio_seq 1 >> $2
 
 
-echo ">>>>>>>>>>>>>>>>>>>Random read, dedicated"
+echo ">>>>>>>>>>>>>>>>>>>>Sequential read, shared" >> $2
 
-../../scripts/umount.sh
-../../scripts/mount.sh
-./sio_ran 1
+$1/umount.sh
+$1/mount.sh
+$BIN_DIR/sio_seq 5 >> $2
 
-../../scripts/umount.sh
-../../scripts/mount.sh
-./sio_ran 1
+$1/umount.sh
+$1/mount.sh
+$BIN_DIR/sio_seq 5 >> $2
 
-../../scripts/umount.sh
-../../scripts/mount.sh
-./sio_ran 1
+echo ">>>>>>>>>>>>>>>>>>>Random read, dedicated" >> $2
 
+$1/umount.sh
+$1/mount.sh
+$BIN_DIR/sio_ran 1 >> $2
 
-echo ">>>>>>>>>>>>>>>>>>>>Random read, shared"
+$1/umount.sh
+$1/mount.sh
+$BIN_DIR/sio_ran 1 >> $2
 
-../../scripts/umount.sh
-../../scripts/mount.sh
-./sio_ran 5
+echo ">>>>>>>>>>>>>>>>>>>>Random read, shared" >> $2
 
-../../scripts/umount.sh
-../../scripts/mount.sh
-./sio_ran 5
+$1/umount.sh
+$1/mount.sh
+$BIN_DIR/sio_ran 5 >> $2
 
-../../scripts/umount.sh
-../../scripts/mount.sh
-./sio_ran 5
-
-
-echo ">>>>>>>>>>>>>>>>>>>>Sequential bursty read, dedicated"
-
-../../scripts/umount.sh
-../../scripts/mount.sh
-./sio_seq_bursty 1
-
-../../scripts/umount.sh
-../../scripts/mount.sh
-./sio_seq_bursty 1
-
-../../scripts/umount.sh
-../../scripts/mount.sh
-./sio_seq_bursty 1
+$1/umount.sh
+$1/mount.sh
+$BIN_DIR/sio_ran 5 >> $2
 
 
-echo ">>>>>>>>>>>>>>>>>>>>>Sequential bursty read, shared"
+echo ">>>>>>>>>>>>>>>>>>>>Sequential bursty read, dedicated" >> $2
 
-../../scripts/umount.sh
-../../scripts/mount.sh
-./sio_seq_bursty 5
+$1/umount.sh
+$1/mount.sh
+$BIN_DIR/sio_seq_bursty 1 >> $2
 
-../../scripts/umount.sh
-../../scripts/mount.sh
-./sio_seq_bursty 5
-
-../../scripts/umount.sh
-../../scripts/mount.sh
-./sio_seq_bursty 5
+$1/umount.sh
+$1/mount.sh
+$BIN_DIR/sio_seq_bursty 1 >> $2
 
 
-echo ">>>>>>>>>>>>>>>>>>>>>Random bursty read, dedicated"
+echo ">>>>>>>>>>>>>>>>>>>>>Sequential bursty read, shared" >> $2
 
-../../scripts/umount.sh
-../../scripts/mount.sh
-./sio_ran_bursty 1
+$1/umount.sh
+$1/mount.sh
+$BIN_DIR/sio_seq_bursty 5 >> $2
 
-../../scripts/umount.sh
-../../scripts/mount.sh
-./sio_ran_bursty 1
-
-../../scripts/umount.sh
-../../scripts/mount.sh
-./sio_ran_bursty 1
+$1/umount.sh
+$1/mount.sh
+$BIN_DIR/sio_seq_bursty 5 >> $2
 
 
-echo ">>>>>>>>>>>>>>>>>>>>>>Random bursty read, shared"
+echo ">>>>>>>>>>>>>>>>>>>>>Random bursty read, dedicated" >> $2
 
-../../scripts/umount.sh
-../../scripts/mount.sh
-./sio_ran_bursty 5
+$1/umount.sh
+$1/mount.sh
+$BIN_DIR/sio_ran_bursty 1 >> $2
 
-../../scripts/umount.sh
-../../scripts/mount.sh
-./sio_ran_bursty 5
+$1/umount.sh
+$1/mount.sh
+$BIN_DIR/sio_ran_bursty 1 >> $2
 
-../../scripts/umount.sh
-../../scripts/mount.sh
-./sio_ran_bursty 5
+
+echo ">>>>>>>>>>>>>>>>>>>>>>Random bursty read, shared" >> $2
+
+$1/umount.sh
+$1/mount.sh
+$BIN_DIR/sio_ran_bursty 5 >> $2
+
+$1/umount.sh
+$1/mount.sh
+$BIN_DIR/sio_ran_bursty 5 >> $2
