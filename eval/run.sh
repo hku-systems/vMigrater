@@ -10,6 +10,8 @@ SCRIPTS=$VMIGRATER_PATH/scripts
 #microbenchmarks
 SIO=$MICROBENCH_PATH/sio/run.sh
 2IO=$MICROBENCH_PATH/2io/run.sh
+4IO=$MICROBENCH_PATH/4io/run.sh
+8IO=$MICROBENCH_PATH/8io/run.sh
 
 usage() {
     echo "usage:"
@@ -44,8 +46,17 @@ microbench() {
 	if [ ! -f $2io_file ]; then
 		touch $2io_file
 	fi
-	$2IO $SCRIPTS $sio_file
-
+	$2IO $SCRIPTS $2io_file
+	4io_file=$microbench_dir/4io
+	if [ ! -f $4io_file ]; then
+		touch $4io_file
+	fi
+	$4IO $SCRIPTS $4io_file
+	8io_file=$microbench_dir/8io
+	if [ ! -f $8io_file ]; then
+		touch $8io_file
+	fi
+	$8IO $SCRIPTS $8io_file
 }
 
 # check whether results dir exists
