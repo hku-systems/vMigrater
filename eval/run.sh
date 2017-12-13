@@ -9,6 +9,7 @@ SCRIPTS=$VMIGRATER_PATH/scripts
 
 #microbenchmarks
 SIO=$MICROBENCH_PATH/sio/run.sh
+2IO=$MICROBENCH_PATH/2io/run.sh
 
 usage() {
     echo "usage:"
@@ -38,7 +39,12 @@ microbench() {
 	if [ ! -f $sio_file ]; then
 		touch $sio_file
 	fi
-	$SIO $BIN_DIR $SCRIPTS $sio_file
+	$SIO $SCRIPTS $sio_file
+	2io_file=$microbench_dir/2io
+	if [ ! -f $2io_file ]; then
+		touch $2io_file
+	fi
+	$2IO $SCRIPTS $sio_file
 
 }
 
