@@ -1490,8 +1490,8 @@ void init_cpu_thread(void) {
 	//if (sem_post(&sem_main) == -1) {
 	//	fprintf(stderr, "sem_post() failed\n");
 	//}
-	sleep(3); //XXX: wait each monitor vCPU timeslice thread stable
-	init_do_migrate_thread();
+	//sleep(3); //XXX: wait each monitor vCPU timeslice thread stable
+	//init_do_migrate_thread();
 }
 
 void *_thread_func(void *arg) {
