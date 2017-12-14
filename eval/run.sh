@@ -1,9 +1,10 @@
 #!/bin/bash
+#FIXME: Currently, vMigrater has to be placed under $HOME dir
 HOME_PATH=~
 VMIGRATER_PATH=$HOME_PATH/vMigrater
 APPS_PATH=$VMIGRATER_PATH/apps
 #LOG_PATH=/home/hkucs/qemu_output/
-OUT_PATH=$VMIGRATER/results
+OUT_PATH=$VMIGRATER_PATH/results
 MICROBENCH_PATH=$APPS_PATH/micro_benchmarks
 SCRIPTS=$VMIGRATER_PATH/scripts
 
@@ -13,7 +14,7 @@ SIO=$MICROBENCH_PATH/sio/run.sh
 4IO=$MICROBENCH_PATH/4io/run.sh
 8IO=$MICROBENCH_PATH/8io/run.sh
 
-usage() {
+function usage() {
     echo "usage:"
 	echo -e "\trun.sh 0 or 1 or 2 or 3..."
 	echo -e "\t0: microbenchmarks"
@@ -31,7 +32,18 @@ usage() {
 	echo -e "\t12: macrobenchmark 1"
 }
 
-microbench() {
+function init_test() {
+    echo "Home path: $HOME_PATH"
+	if [ ! -d $VMIGRATER_PATH ]; then
+		echo "please download and place vMigrater "
+	fi
+	echo "vMigrater path: $VMIGRATER_PATH"
+	echo "Evaluation results path: $OUT_PATH"
+	echo "Microbenchmarks path: $MICROBENCH_PATH"
+	echo "vMigrater scripts path: $SCRIPTS"
+}
+
+function microbench() {
 	echo "This is Microbenchmarks........................."
 	microbench_dir=$OUT_PATH/microbench
 	if [ ! -d $microbench_dir ]; then
@@ -58,6 +70,9 @@ microbench() {
 	fi
 	$8IO $SCRIPTS $8io_file
 }
+
+#init and check all pre-settings for vMigrater evaluation framework
+init_test
 
 # check whether results dir exists
 if [ ! -d $OUT_PATH ]; then
