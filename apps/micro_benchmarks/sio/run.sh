@@ -3,6 +3,11 @@
 BIN_DIR=/home/kvm1/vMigrater/apps/micro_benchmarks/sio
 BIN_MIGRATER=/home/kvm1/vMigrater/apps/micro_benchmarks/sio/with_migrater
 
+echo "This is microbenchmark single io.............."
+echo "vMigrater script dir is $1"
+echo "vMigrater for single io dir is $2"
+echo "Single IO BIN dir is $BIN_DIR"
+echo "Single IO vMigrater BIN dir is $BIN_MIGRATER"
 
 
 echo ">>>>>>>>>>>>>>>>>>>Sequential read, dedicated" >> $2
