@@ -10,26 +10,26 @@ SCRIPTS=$VMIGRATER_PATH/scripts
 
 #microbenchmarks
 SIO=$MICROBENCH_PATH/sio/run.sh
-2IO=$MICROBENCH_PATH/2io/run.sh
-4IO=$MICROBENCH_PATH/4io/run.sh
-8IO=$MICROBENCH_PATH/8io/run.sh
+TIO=$MICROBENCH_PATH/2io/run.sh
+FIO=$MICROBENCH_PATH/4io/run.sh
+EIO=$MICROBENCH_PATH/8io/run.sh
 
 function usage() {
     echo "usage:"
 	echo -e "\trun.sh 0 or 1 or 2 or 3..."
 	echo -e "\t0: microbenchmarks"
 	echo -e "\t1: macrobenchmark 1"
-	echo -e "\t2: macrobenchmark 1"
-	echo -e "\t3: macrobenchmark 1"
-	echo -e "\t4: macrobenchmark 1"
-	echo -e "\t5: macrobenchmark 1"
-	echo -e "\t6: macrobenchmark 1"
-	echo -e "\t7: macrobenchmark 1"
-	echo -e "\t8: macrobenchmark 1"
-	echo -e "\t9: macrobenchmark 1"
-	echo -e "\t10: macrobenchmark 1"
-	echo -e "\t11: macrobenchmark 1"
-	echo -e "\t12: macrobenchmark 1"
+	echo -e "\t2: macrobenchmark 2"
+	echo -e "\t3: macrobenchmark 3"
+	echo -e "\t4: macrobenchmark 4"
+	echo -e "\t5: macrobenchmark 5"
+	echo -e "\t6: macrobenchmark 6"
+	echo -e "\t7: macrobenchmark 7"
+	echo -e "\t8: macrobenchmark 8"
+	echo -e "\t9: macrobenchmark 9"
+	echo -e "\t10: macrobenchmark 10"
+	echo -e "\t11: macrobenchmark 11"
+	echo -e "\t12: macrobenchmark 12"
 }
 
 function init_test() {
@@ -54,21 +54,21 @@ function microbench() {
 		touch $sio_file
 	fi
 	$SIO $SCRIPTS $sio_file
-	2io_file=$microbench_dir/2io
-	if [ ! -f $2io_file ]; then
-		touch $2io_file
+	tio_file=$microbench_dir/2io
+	if [ ! -f $tio_file ]; then
+		touch $tio_file
 	fi
-	$2IO $SCRIPTS $2io_file
-	4io_file=$microbench_dir/4io
-	if [ ! -f $4io_file ]; then
-		touch $4io_file
+	$TIO $SCRIPTS $tio_file
+	fio_file=$microbench_dir/4io
+	if [ ! -f $fio_file ]; then
+		touch $fio_file
 	fi
-	$4IO $SCRIPTS $4io_file
-	8io_file=$microbench_dir/8io
-	if [ ! -f $8io_file ]; then
-		touch $8io_file
+	$FIO $SCRIPTS $fio_file
+	eio_file=$microbench_dir/8io
+	if [ ! -f $eio_file ]; then
+		touch $eio_file
 	fi
-	$8IO $SCRIPTS $8io_file
+	$EIO $SCRIPTS $eio_file
 }
 
 #init and check all pre-settings for vMigrater evaluation framework
