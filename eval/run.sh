@@ -6,6 +6,7 @@ APPS_PATH=$VMIGRATER_PATH/apps
 #LOG_PATH=/home/hkucs/qemu_output/
 OUT_PATH=$VMIGRATER_PATH/results
 MICROBENCH_PATH=$APPS_PATH/micro_benchmarks
+MACROBENCH_PATH=$APPS_PATH/macro_benchmarks
 SCRIPTS=$VMIGRATER_PATH/scripts
 
 #microbenchmarks
@@ -13,6 +14,10 @@ SIO=$MICROBENCH_PATH/sio/run.sh
 TIO=$MICROBENCH_PATH/2io/run.sh
 FIO=$MICROBENCH_PATH/4io/run.sh
 EIO=$MICROBENCH_PATH/8io/run.sh
+
+#macrobenchmarks
+MACRO1=$MACROBENCH_PATH/bench1/run.sh
+
 
 function usage() {
     echo "usage:"
@@ -71,6 +76,19 @@ function microbench() {
 	$EIO $SCRIPTS $eio_file
 }
 
+function macrobench1() {
+    echo "This is macrobenchmark 1.........................."
+	macrobench_dir=$OUT_PATH/macrobench
+	if [ ! -d $macrobench_dir ]; then
+		mkdir $macrobench_dir
+	fi
+	bench1_file=$macrobench_dir/bench1
+	if [ ! -f $bench1_file ]; then
+		touch $bench1_file
+	fi
+	$MACRO1 $SCRIPTS $bench1_file
+}
+
 #init and check all pre-settings for vMigrater evaluation framework
 init_test
 
@@ -85,7 +103,7 @@ else
 	if [ "$1" == "0" ]; then
 		microbench
 	elif [ "$1" == "1" ]; then
-		echo
+		macrobench1
 	elif [ "$1" == "2" ]; then
 		echo
 	elif [ "$1" == "3" ]; then
