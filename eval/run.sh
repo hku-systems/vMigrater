@@ -8,6 +8,7 @@ OUT_PATH=$VMIGRATER_PATH/results
 MICROBENCH_PATH=$APPS_PATH/micro_benchmarks
 MACROBENCH_PATH=$APPS_PATH/macro_benchmarks
 SCRIPTS=$VMIGRATER_PATH/scripts
+TOOLS=$VMIGRATER_PATH/tools
 
 #microbenchmarks
 SIO=$MICROBENCH_PATH/sio/run.sh
@@ -77,7 +78,7 @@ function microbench() {
 }
 
 function macrobench1() {
-    echo "This is macrobenchmark 1.........................."
+    #echo "This is macrobenchmark 1.........................."
 	macrobench_dir=$OUT_PATH/macrobench
 	if [ ! -d $macrobench_dir ]; then
 		mkdir $macrobench_dir
@@ -86,7 +87,7 @@ function macrobench1() {
 	if [ ! -f $bench1_file ]; then
 		touch $bench1_file
 	fi
-	$MACRO1 $SCRIPTS $bench1_file
+	$MACRO1 $SCRIPTS $bench1_file $TOOLS
 }
 
 #init and check all pre-settings for vMigrater evaluation framework
