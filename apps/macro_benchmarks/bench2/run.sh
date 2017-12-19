@@ -49,7 +49,7 @@ killall -9 main
 killall -9 vMigrater_dbench.sh
 
 # 2 threads
-echo ">>>>>>>>>>>>>>>>>>>dbench 2 threads, dedicated" > $2
+echo ">>>>>>>>>>>>>>>>>>>dbench 2 threads, dedicated" >> $2
 $1/umount.sh
 $1/mount.sh
 $3/flush
@@ -90,7 +90,7 @@ killall -9 main
 killall -9 vMigrater_dbench.sh
 
 # 4 threads
-echo ">>>>>>>>>>>>>>>>>>>dbench 4 threads, dedicated" > $2
+echo ">>>>>>>>>>>>>>>>>>>dbench 4 threads, dedicated" >> $2
 $1/umount.sh
 $1/mount.sh
 $3/flush
@@ -131,7 +131,7 @@ killall -9 main
 killall -9 vMigrater_dbench.sh
 
 # 8 threads
-echo ">>>>>>>>>>>>>>>>>>>dbench 8 threads, dedicated" > $2
+echo ">>>>>>>>>>>>>>>>>>>dbench 8 threads, dedicated" >> $2
 $1/umount.sh
 $1/mount.sh
 $3/flush
