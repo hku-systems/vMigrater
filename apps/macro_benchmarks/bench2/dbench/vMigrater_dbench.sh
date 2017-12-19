@@ -1,12 +1,14 @@
 #!/bin/bash
 
-process_id=`/bin/ps -aux | grep "/usr/bin/dbench" | grep -v "grep" | grep -v "bash" | awk '{print $2}'`
+DBENCH_DIR=/home/kvm1/vMigrater/apps/macro_benchmarks/bench2/dbench
 
-#process_id1=`echo $process_id | awk -F' ' '{print $1}'`
-#process_id2=`echo $process_id | awk -F' ' '{print $2}'`
-
-#echo $process_id1
-#echo $process_id2
-
-./main $process_id
+while true; do
+	process_id=`/bin/ps -aux | grep "/usr/bin/dbench" | grep -v "grep" | grep -v "bash" | awk '{print $2}'`
+	if [[ ! -z $process_id ]]; then
+		echo "dbench pid is $process_id"
+		$DBENCH_DIR/main $process_id
+	else
+		echo "dbench is not running!"
+	fi
+done
 
