@@ -19,6 +19,7 @@ EIO=$MICROBENCH_PATH/8io/run.sh
 #macrobenchmarks
 MACRO1=$MACROBENCH_PATH/bench1/run.sh
 MACRO2=$MACROBENCH_PATH/bench2/run.sh
+MACRO3=$MACROBENCH_PATH/bench3/run.sh
 
 
 function usage() {
@@ -104,6 +105,19 @@ function macrobench2() {
 	$MACRO2 $SCRIPTS $bench2_file $TOOLS
 }
 
+function macrobench3() {
+    #echo "This is macrobenchmark 3.........................."
+	macrobench_dir=$OUT_PATH/macrobench
+	if [ ! -d $macrobench_dir ]; then
+		mkdir $macrobench_dir
+	fi
+	bench3_file=$macrobench_dir/bench3
+	if [ ! -f $bench3_file ]; then
+		touch $bench3_file
+	fi
+	$MACRO3 $SCRIPTS $bench3_file $TOOLS
+}
+
 #init and check all pre-settings for vMigrater evaluation framework
 init_test
 
@@ -122,7 +136,7 @@ else
 	elif [ "$1" == "2" ]; then
 		macrobench2
 	elif [ "$1" == "3" ]; then
-		echo
+		macrobench3
 	elif [ "$1" == "4" ]; then
 		echo
 	elif [ "$1" == "5" ]; then
