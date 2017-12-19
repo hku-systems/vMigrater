@@ -7,7 +7,7 @@ while true; do
 	if [[ ! -z $process_id ]]; then
 		echo "sysbench pid is $process_id"
 		processes=`ls /proc/$process_id/task/`
-		$DBENCH_DIR/main $processes
+		$SYSBENCH_DIR/main $processes
 	else
 		echo "sysbench is not running!"
 	fi
