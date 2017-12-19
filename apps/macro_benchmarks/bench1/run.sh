@@ -19,7 +19,8 @@ if [ -f $TESTB ]; then
 	mv /home/kvm1/sda3/testB /home/kvm1/
 fi
 
-#we need to cleanup last time's results in the beginning
+#We need to cleanup last time's results in the beginning
+#Copy macrobenchmark
 echo ">>>>>>>>>>>>>>>>>>>Copy, dedicated" > $2
 $1/umount.sh
 $1/mount.sh
@@ -61,6 +62,49 @@ $BENCH1_DIR/copy/vMigrater_cp.sh &
 $BENCH1_DIR/copy/cp2.sh 5 >> $2
 killall -9 main
 killall -9 vMigrater_cp.sh
+
+#Move macrobenchmark
+echo ">>>>>>>>>>>>>>>>>>>Move, dedicated" >> $2
+$1/umount.sh
+$1/mount.sh
+$3/flush
+$BENCH1_DIR/move/mv2.sh 1 1 >> $2
+
+$1/umount.sh
+$1/mount.sh
+$3/flush
+$BENCH1_DIR/move/mv2.sh 1 2 >> $2
+
+
+echo ">>>>>>>>>>>>>>>>>>>Move, shared" >> $2
+$1/umount.sh
+$1/mount.sh
+$3/flush
+$BENCH1_DIR/move/mv2.sh 5 1 >> $2
+
+$1/umount.sh
+$1/mount.sh
+$3/flush
+$BENCH1_DIR/move/mv2.sh 5 2 >> $2
+
+
+echo ">>>>>>>>>>>>>>>>>>>Move, shared with vMigrater" >> $2
+
+$1/umount.sh
+$1/mount.sh
+$3/flush
+$BENCH1_DIR/move/vMigrater_mv.sh &
+$BENCH1_DIR/move/mv2.sh 5 1 >> $2
+killall -9 main
+killall -9 vMigrater_mv.sh
+
+$1/umount.sh
+$1/mount.sh
+$3/flush
+$BENCH1_DIR/move/vMigrater_mv.sh &
+$BENCH1_DIR/move/mv2.sh 5 2 >> $2
+killall -9 main
+killall -9 vMigrater_mv.sh
 
 #recovery
 if mount | grep /dev/vda3 > /dev/null; then

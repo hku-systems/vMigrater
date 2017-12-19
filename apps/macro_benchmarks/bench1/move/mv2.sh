@@ -1,27 +1,17 @@
 #!/bin/bash
 
-if [ "$1" = "1" ]
-then
-	# 1st run on shared vCPU
-	echo "this is the 1st"
-	./umount.sh
-	./mount.sh
-	./flush
-	
-	start_ts=$(($(date +%s%N)/1000))
-	/usr/bin/taskset -c 6 /bin/mv /home/kvm1/sda2/testA /home/kvm1/sda3
-	end_ts=$(($(date +%s%N)/1000))
-	let diff_ts=$end_ts-$start_ts
-	echo "1st: It needs $diff_ts microseconds with vMigrater"
-else
-	# 2nd run on shared vCPU
-	./umount.sh
-	./mount.sh
-	./flush
+echo "move macrobench on $1"
 
+if [ "$2" = "1" ]
+then
 	start_ts=$(($(date +%s%N)/1000))
-	/usr/bin/taskset -c 6 /bin/mv /home/kvm1/sda3/testA /home/kvm1/sda2
+	/usr/bin/taskset -c $1 /bin/mv /home/kvm1/testB /home/kvm1/sda3
 	end_ts=$(($(date +%s%N)/1000))
 	let diff_ts=$end_ts-$start_ts
-	echo "2nd: It needs $diff_ts microseconds"
+else
+	start_ts=$(($(date +%s%N)/1000))
+	/usr/bin/taskset -c $1 /bin/mv /home/kvm1/sda3/testB /home/kvm1
+	end_ts=$(($(date +%s%N)/1000))
+	let diff_ts=$end_ts-$start_ts
 fi
+echo "Move, it needs $diff_ts microseconds on vCPU $1"
