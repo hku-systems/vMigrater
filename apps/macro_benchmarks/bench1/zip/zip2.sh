@@ -9,7 +9,7 @@ echo "zip, macrobench is on vCPU $1"
 #	./flush
 	
 start_ts=$(($(date +%s%N)/1000))
-/usr/bin/taskset -c $1 /usr/bin/zip -r linux_kernel.zip linux-4.14.3
+/usr/bin/taskset -c $1 /usr/bin/zip -r linux_kernel.zip linux-4.14.3 > /dev/null
 end_ts=$(($(date +%s%N)/1000))
 let diff_ts=$end_ts-$start_ts
 echo "zip, it needs $diff_ts microseconds on vCPU $1"

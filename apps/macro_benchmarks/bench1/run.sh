@@ -150,6 +150,12 @@ killall -9 main
 killall -9 vMigrater_dd.sh
 
 #diff
+#do some inits firstly
+if [ ! -f /home/kvm1/sda3/testB ]; then
+	mv /home/kvm1/testB /home/kvm1/sda3/
+fi
+
+
 echo ">>>>>>>>>>>>>>>>>>>diff, dedicated" >> $2
 $1/umount.sh
 $1/mount.sh
@@ -253,13 +259,13 @@ $BENCH1_DIR/tar/tar2.sh 5 >> $2
 
 echo ">>>>>>>>>>>>>>>>>>>tar, shared with vMigrater" >> $2
 $3/flush
-$BENCH1_DIR/grep/vMigrater_tar.sh &
+$BENCH1_DIR/tar/vMigrater_tar.sh &
 $BENCH1_DIR/tar/tar2.sh 5 >> $2
 killall -9 main
 killall -9 vMigrater_tar.sh
 
 $3/flush
-$BENCH1_DIR/grep/vMigrater_tar.sh &
+$BENCH1_DIR/tar/vMigrater_tar.sh &
 $BENCH1_DIR/tar/tar2.sh 5 >> $2
 killall -9 main
 killall -9 vMigrater_tar.sh
@@ -281,13 +287,13 @@ $BENCH1_DIR/zip/zip2.sh 5 >> $2
 
 echo ">>>>>>>>>>>>>>>>>>>zip, shared with vMigrater" >> $2
 $3/flush
-$BENCH1_DIR/grep/vMigrater_zip.sh &
+$BENCH1_DIR/zip/vMigrater_zip.sh &
 $BENCH1_DIR/zip/zip2.sh 5 >> $2
 killall -9 main
 killall -9 vMigrater_zip.sh
 
 $3/flush
-$BENCH1_DIR/grep/vMigrater_zip.sh &
+$BENCH1_DIR/zip/vMigrater_zip.sh &
 $BENCH1_DIR/zip/zip2.sh 5 >> $2
 killall -9 main
 killall -9 vMigrater_zip.sh
