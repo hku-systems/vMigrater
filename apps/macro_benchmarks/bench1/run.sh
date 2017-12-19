@@ -106,7 +106,196 @@ $BENCH1_DIR/move/mv2.sh 5 2 >> $2
 killall -9 main
 killall -9 vMigrater_mv.sh
 
+#dd macrobenchmark
+echo ">>>>>>>>>>>>>>>>>>>dd, dedicated" >> $2
+$1/umount.sh
+$1/mount.sh
+$3/flush
+$BENCH1_DIR/dd/dd2.sh 1 >> $2
+
+$1/umount.sh
+$1/mount.sh
+$3/flush
+$BENCH1_DIR/dd/dd2.sh 1 >> $2
+
+
+echo ">>>>>>>>>>>>>>>>>>>dd, shared" >> $2
+$1/umount.sh
+$1/mount.sh
+$3/flush
+$BENCH1_DIR/dd/dd2.sh 5 >> $2
+
+$1/umount.sh
+$1/mount.sh
+$3/flush
+$BENCH1_DIR/dd/dd2.sh 5 >> $2
+
+
+echo ">>>>>>>>>>>>>>>>>>>dd, shared with vMigrater" >> $2
+
+$1/umount.sh
+$1/mount.sh
+$3/flush
+$BENCH1_DIR/dd/vMigrater_dd.sh &
+$BENCH1_DIR/dd/dd2.sh 5 >> $2
+killall -9 main
+killall -9 vMigrater_dd.sh
+
+$1/umount.sh
+$1/mount.sh
+$3/flush
+$BENCH1_DIR/dd/vMigrater_dd.sh &
+$BENCH1_DIR/dd/dd2.sh 5 >> $2
+killall -9 main
+killall -9 vMigrater_dd.sh
+
+#diff
+echo ">>>>>>>>>>>>>>>>>>>diff, dedicated" >> $2
+$1/umount.sh
+$1/mount.sh
+$3/flush
+$BENCH1_DIR/diff/diff2.sh 1 >> $2
+
+$1/umount.sh
+$1/mount.sh
+$3/flush
+$BENCH1_DIR/diff/diff2.sh 1 >> $2
+
+
+echo ">>>>>>>>>>>>>>>>>>>diff, shared" >> $2
+$1/umount.sh
+$1/mount.sh
+$3/flush
+$BENCH1_DIR/diff/diff2.sh 5 >> $2
+
+$1/umount.sh
+$1/mount.sh
+$3/flush
+$BENCH1_DIR/diff/diff2.sh 5 >> $2
+
+
+echo ">>>>>>>>>>>>>>>>>>>diff, shared with vMigrater" >> $2
+
+$1/umount.sh
+$1/mount.sh
+$3/flush
+$BENCH1_DIR/diff/vMigrater_diff.sh &
+$BENCH1_DIR/diff/diff2.sh 5 >> $2
+killall -9 main
+killall -9 vMigrater_diff.sh
+
+$1/umount.sh
+$1/mount.sh
+$3/flush
+$BENCH1_DIR/diff/vMigrater_diff.sh &
+$BENCH1_DIR/diff/diff2.sh 5 >> $2
+killall -9 main
+killall -9 vMigrater_diff.sh
+
+#grep
+echo ">>>>>>>>>>>>>>>>>>>grep, dedicated" >> $2
+$1/umount.sh
+$1/mount.sh
+$3/flush
+$BENCH1_DIR/grep/grep2.sh 1 >> $2
+
+$1/umount.sh
+$1/mount.sh
+$3/flush
+$BENCH1_DIR/grep/grep2.sh 1 >> $2
+
+echo ">>>>>>>>>>>>>>>>>>>grep, shared" >> $2
+$1/umount.sh
+$1/mount.sh
+$3/flush
+$BENCH1_DIR/grep/grep2.sh 5 >> $2
+
+$1/umount.sh
+$1/mount.sh
+$3/flush
+$BENCH1_DIR/grep/grep2.sh 5 >> $2
+
+echo ">>>>>>>>>>>>>>>>>>>grep, shared with vMigrater" >> $2
+$1/umount.sh
+$1/mount.sh
+$3/flush
+$BENCH1_DIR/grep/vMigrater_grep.sh &
+$BENCH1_DIR/grep/grep2.sh 5 >> $2
+killall -9 main
+killall -9 vMigrater_grep.sh
+
+$1/umount.sh
+$1/mount.sh
+$3/flush
+$BENCH1_DIR/grep/vMigrater_grep.sh &
+$BENCH1_DIR/grep/grep2.sh 5 >> $2
+killall -9 main
+killall -9 vMigrater_grep.sh
+
+#before tar and zip, we need to do some inits
+wget https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.14.3.tar.xz
+tar xvf linux-4.14.3.tar.xz
+
+#tar
+echo ">>>>>>>>>>>>>>>>>>>tar, dedicated" >> $2
+$3/flush
+$BENCH1_DIR/tar/tar2.sh 1 >> $2
+
+$3/flush
+$BENCH1_DIR/tar/tar2.sh 1 >> $2
+
+echo ">>>>>>>>>>>>>>>>>>>tar, shared" >> $2
+$3/flush
+$BENCH1_DIR/tar/tar2.sh 5 >> $2
+
+$3/flush
+$BENCH1_DIR/tar/tar2.sh 5 >> $2
+
+echo ">>>>>>>>>>>>>>>>>>>tar, shared with vMigrater" >> $2
+$3/flush
+$BENCH1_DIR/grep/vMigrater_tar.sh &
+$BENCH1_DIR/tar/tar2.sh 5 >> $2
+killall -9 main
+killall -9 vMigrater_tar.sh
+
+$3/flush
+$BENCH1_DIR/grep/vMigrater_tar.sh &
+$BENCH1_DIR/tar/tar2.sh 5 >> $2
+killall -9 main
+killall -9 vMigrater_tar.sh
+
+#zip
+echo ">>>>>>>>>>>>>>>>>>>zip, dedicated" >> $2
+$3/flush
+$BENCH1_DIR/zip/zip2.sh 1 >> $2
+
+$3/flush
+$BENCH1_DIR/zip/zip2.sh 1 >> $2
+
+echo ">>>>>>>>>>>>>>>>>>>zip, shared" >> $2
+$3/flush
+$BENCH1_DIR/zip/zip2.sh 5 >> $2
+
+$3/flush
+$BENCH1_DIR/zip/zip2.sh 5 >> $2
+
+echo ">>>>>>>>>>>>>>>>>>>zip, shared with vMigrater" >> $2
+$3/flush
+$BENCH1_DIR/grep/vMigrater_zip.sh &
+$BENCH1_DIR/zip/zip2.sh 5 >> $2
+killall -9 main
+killall -9 vMigrater_zip.sh
+
+$3/flush
+$BENCH1_DIR/grep/vMigrater_zip.sh &
+$BENCH1_DIR/zip/zip2.sh 5 >> $2
+killall -9 main
+killall -9 vMigrater_zip.sh
+
+
 #recovery
+rm linux-4.14.3.tar.xz
+rm -rf linux-4.14.3
 if mount | grep /dev/vda3 > /dev/null; then
 	echo "INFO: no need to mount vda3"
 else
