@@ -74,7 +74,7 @@ $1/umount.sh
 $1/mount.sh
 $3/flush
 $BENCH5_DIR/web_server/vMigrater_nginx.sh &
-$BENCH5_DIR/web_server/nginx2.sh 5 500 >> $2
+$BENCH5_DIR/web_server/nginx2.sh 1 500 >> $2
 killall -9 main
 killall -9 vMigrater_nginx.sh
 
@@ -83,7 +83,7 @@ $1/umount.sh
 $1/mount.sh
 $3/flush
 $BENCH5_DIR/web_server/vMigrater_nginx.sh &
-$BENCH5_DIR/web_server/nginx2.sh 5 500 >> $2
+$BENCH5_DIR/web_server/nginx2.sh 1 500 >> $2
 killall -9 main
 killall -9 vMigrater_nginx.sh
 
@@ -91,7 +91,7 @@ $1/umount.sh
 $1/mount.sh
 $3/flush
 $BENCH5_DIR/web_server/vMigrater_nginx.sh &
-$BENCH5_DIR/web_server/nginx2.sh 5 1000 >> $2
+$BENCH5_DIR/web_server/nginx2.sh 1 1000 >> $2
 killall -9 main
 killall -9 vMigrater_nginx.sh
 
@@ -99,6 +99,6 @@ $1/umount.sh
 $1/mount.sh
 $3/flush
 $BENCH5_DIR/web_server/vMigrater_nginx.sh &
-$BENCH5_DIR/web_server/nginx2.sh 5 1000 >> $2
+$BENCH5_DIR/web_server/nginx2.sh 1 1000 >> $2
 killall -9 main
 killall -9 vMigrater_nginx.sh
