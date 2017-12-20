@@ -19,7 +19,7 @@ $1/mount.sh
 $3/flush
 $BENCH4_DIR/leveldb/leveldb2.sh 1 1 >> $2
 
-echo ">>>>>>>>>>>>>>>>>>>leveldb 1 thread, shared" > $2
+echo ">>>>>>>>>>>>>>>>>>>leveldb 1 thread, shared" >> $2
 $1/umount.sh
 $1/mount.sh
 $3/flush
@@ -46,4 +46,5 @@ $BENCH4_DIR/leveldb/vMigrater_leveldb.sh &
 $BENCH4_DIR/leveldb/leveldb2.sh 5 1 >> $2
 killall -9 main
 killall -9 vMigrater_leveldb.sh
+
 
