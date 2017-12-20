@@ -48,3 +48,42 @@ killall -9 main
 killall -9 vMigrater_leveldb.sh
 
 
+#1 thread
+echo ">>>>>>>>>>>>>>>>>>>sysbench OLTP mysql, 1 thread, dedicated" >> $2
+$1/umount.sh
+$1/mount.sh
+$3/flush
+$BENCH4_DIR/mysql/sysbench2.sh 1 1 >> $2
+
+$1/umount.sh
+$1/mount.sh
+$3/flush
+$BENCH4_DIR/mysql/sysbench2.sh 1 1 >> $2
+
+echo ">>>>>>>>>>>>>>>>>>>sysbench OLTP mysql, 1 thread, shared" >> $2
+$1/umount.sh
+$1/mount.sh
+$3/flush
+$BENCH4_DIR/mysql/sysbench2.sh 5 1 >> $2
+
+$1/umount.sh
+$1/mount.sh
+$3/flush
+$BENCH4_DIR/mysql/sysbench2.sh 5 1 >> $2
+
+echo ">>>>>>>>>>>>>>>>>>>sysbench OLTP mysql, 1 thread, shared" >> $2
+$1/umount.sh
+$1/mount.sh
+$3/flush
+$BENCH4_DIR/mysql/vMigrater_sysbench.sh &
+$BENCH4_DIR/mysql/sysbench2.sh 5 1 >> $2
+killall -9 main
+killall -9 vMigrater_sysbench.sh
+
+$1/umount.sh
+$1/mount.sh
+$3/flush
+$BENCH4_DIR/mysql/vMigrater_sysbench.sh &
+$BENCH4_DIR/mysql/sysbench2.sh 5 1 >> $2
+killall -9 main
+killall -9 vMigrater_sysbench.sh
