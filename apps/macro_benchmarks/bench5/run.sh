@@ -7,14 +7,14 @@ echo "vMigrater script dir is $1"
 echo "vMigrater results for macrobench 5 dir is $2"
 echo "vMigrater tools dir is $3"
 
-process_id1=`/bin/ps -aux | grep "nginx:" | grep -v "grep" | grep -v "bash" | awk '{print $2}' | head -n1`
-process_id2=`/bin/ps -aux | grep "nginx:" | grep -v "grep" | grep -v "bash" | awk '{print $2}' | head -n2`
-process_id3=`/bin/ps -aux | grep "nginx:" | grep -v "grep" | grep -v "bash" | awk '{print $2}' | head -n3`
-process_id4=`/bin/ps -aux | grep "nginx:" | grep -v "grep" | grep -v "bash" | awk '{print $2}' | head -n4`
-process_id5=`/bin/ps -aux | grep "nginx:" | grep -v "grep" | grep -v "bash" | awk '{print $2}' | head -n5`
+process_id1=`/bin/ps -aux | grep "nginx:" | grep -v "grep" | grep -v "bash" | awk '{print $2}' | awk 'NR==1 {print; exit}'`
+process_id2=`/bin/ps -aux | grep "nginx:" | grep -v "grep" | grep -v "bash" | awk '{print $2}' | awk 'NR==2 {print; exit}'`
+process_id3=`/bin/ps -aux | grep "nginx:" | grep -v "grep" | grep -v "bash" | awk '{print $2}' | awk 'NR==3 {print; exit}'`
+process_id4=`/bin/ps -aux | grep "nginx:" | grep -v "grep" | grep -v "bash" | awk '{print $2}' | awk 'NR==4 {print; exit}'`
+process_id5=`/bin/ps -aux | grep "nginx:" | grep -v "grep" | grep -v "bash" | awk '{print $2}' | awk 'NR==5 {print; exit}'`
 
 echo ">>>>>>>>>>>>>>>>>>>nginx, dedicated" > $2
-#FIXME: this should be done in server side
+#server side
 sudo taskset -pc 1 $process_id1
 sudo taskset -pc 1 $process_id2
 sudo taskset -pc 1 $process_id3
