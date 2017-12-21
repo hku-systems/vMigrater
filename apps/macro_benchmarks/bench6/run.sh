@@ -46,3 +46,4 @@ $3/flush
 $BENCH6_DIR/net_perf/vMigrater_sockperf.sh &
 $BENCH6_DIR/net_perf/sockperf2.sh 5 >> $2
 killall -9 main
+killall -9 vMigrater_sockperf.sh
