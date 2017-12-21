@@ -13,8 +13,8 @@ processes=`ls /proc/$process_id/task/`
 
 for entry in $processes
 do
-	echo "$entry"
-	sudo taskset -pc $1 $entry
+	#echo "$entry"
+	sudo taskset -pc $1 $entry > /dev/null
 done
 
 #/home/kvm1/vMigrater/macro_benchmarks/bench9/main *

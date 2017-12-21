@@ -184,11 +184,11 @@ function macrobench11() {
 	if [ ! -d $macrobench_dir ]; then
 		mkdir $macrobench_dir
 	fi
-	bench11_file=$macrobench_dir/bench10
+	bench11_file=$macrobench_dir/bench11
 	if [ ! -f $bench11_file ]; then
 		touch $bench11_file
 	fi
-	$MACRO11 $SCRIPTS $bench10_file $TOOLS
+	$MACRO11 $SCRIPTS $bench11_file $TOOLS
 }
 
 #init and check all pre-settings for vMigrater evaluation framework
