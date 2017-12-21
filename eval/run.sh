@@ -23,6 +23,7 @@ MACRO3=$MACROBENCH_PATH/bench3/run.sh
 MACRO4=$MACROBENCH_PATH/bench4/run.sh
 MACRO5=$MACROBENCH_PATH/bench5/run.sh
 MACRO6=$MACROBENCH_PATH/bench6/run.sh
+MACRO10=$MACROBENCH_PATH/bench10/run.sh
 
 
 function usage() {
@@ -159,6 +160,18 @@ function macrobench6() {
 	$MACRO6 $SCRIPTS $bench6_file $TOOLS
 }
 
+function macrobench10() {
+	macrobench_dir=$OUT_PATH/macrobench
+	if [ ! -d $macrobench_dir ]; then
+		mkdir $macrobench_dir
+	fi
+	bench10_file=$macrobench_dir/bench10
+	if [ ! -f $bench10_file ]; then
+		touch $bench10_file
+	fi
+	$MACRO10 $SCRIPTS $bench10_file $TOOLS
+}
+
 #init and check all pre-settings for vMigrater evaluation framework
 init_test
 
@@ -185,13 +198,13 @@ else
 	elif [ "$1" == "6" ]; then
 		macrobench6
 	elif [ "$1" == "7" ]; then
-		echo
+		echo "TBD"
 	elif [ "$1" == "8" ]; then
-		echo
+		echo "TBD"
 	elif [ "$1" == "9" ]; then
-		echo
+		echo "TBD"
 	elif [ "$1" == "10" ]; then
-		echo
+		macrobench10
 	elif [ "$1" == "11" ]; then
 		echo
 	elif [ "$1" == "12" ]; then

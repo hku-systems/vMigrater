@@ -1,18 +1,15 @@
 #!/bin/bash
 
-process_id=`/bin/ps -aux | grep "postmark" | grep -v "grep" | grep -v "bash" | awk '{print $2}'`
+POSTMARK_DIR=/home/kvm1/vMigrater/apps/macro_benchmarks/bench10
 
-echo "postmark's pid is $process_id"
-
-#cd /proc/$process_id/task/
-#search_dir=/proc/$process_id/task
-#files=(*)
-
-#files=*
-#echo *
-
-/home/kvm1/vMigrater/macro_benchmarks/bench10/main $process_id
-
-#./main $process_id
-
+while true; do
+	process_id=`/bin/ps -aux | grep "postmark /home/kvm1/vMigrater/apps/macro_benchmarks/bench10/config4postmark" | grep -v "grep" | grep -v "bash" | awk '{print $2}'`
+	if [[ ! -z $process_id ]]; then
+		echo "postmark pid is $process_id"
+		#processes=`ls /proc/$process_id/task/`
+		$POSTMARK_DIR/main $process_id
+	else
+		echo "postmark is not running!"
+	fi
+done
 
