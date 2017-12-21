@@ -1,4 +1,10 @@
 #!/bin/bash
+
+#Evaluation framework for vMigrater research project
+#
+#
+# Weiwei Jia <harryxiyou@gmail.com> 2017
+
 #FIXME: Currently, vMigrater has to be placed under $HOME dir
 HOME_PATH=~
 VMIGRATER_PATH=$HOME_PATH/vMigrater
@@ -24,6 +30,7 @@ MACRO4=$MACROBENCH_PATH/bench4/run.sh
 MACRO5=$MACROBENCH_PATH/bench5/run.sh
 MACRO6=$MACROBENCH_PATH/bench6/run.sh
 MACRO10=$MACROBENCH_PATH/bench10/run.sh
+MACRO11=$MACROBENCH_PATH/bench11/run.sh
 
 
 function usage() {
@@ -172,6 +179,18 @@ function macrobench10() {
 	$MACRO10 $SCRIPTS $bench10_file $TOOLS
 }
 
+function macrobench11() {
+	macrobench_dir=$OUT_PATH/macrobench
+	if [ ! -d $macrobench_dir ]; then
+		mkdir $macrobench_dir
+	fi
+	bench11_file=$macrobench_dir/bench10
+	if [ ! -f $bench11_file ]; then
+		touch $bench11_file
+	fi
+	$MACRO11 $SCRIPTS $bench10_file $TOOLS
+}
+
 #init and check all pre-settings for vMigrater evaluation framework
 init_test
 
@@ -206,10 +225,10 @@ else
 	elif [ "$1" == "10" ]; then
 		macrobench10
 	elif [ "$1" == "11" ]; then
-		echo
+		macrobench11
 	elif [ "$1" == "12" ]; then
-		echo
+		echo "TBD"
 	else
-		echo
+		usage
 	fi
 fi
