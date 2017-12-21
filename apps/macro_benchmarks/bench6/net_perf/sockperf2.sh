@@ -10,7 +10,7 @@ IP_ADDR_CLIENT="192.168.122.130"
 /usr/bin/taskset -c $1 $SOCKPERF_DIR/sockperf server --tcp -i $IP_ADDR_SERVER -p 12345 &
 
 #client side
-ssh kvm1@$IP_ADDR_CLIENT /usr/bin/taskset -c $1 ./sockperf pp --tcp -i $IP_ADDR_SERVER -p 12345 -t 30
+ssh kvm1@$IP_ADDR_CLIENT /usr/bin/taskset -c 1 $SOCKPERF_DIR/sockperf pp --tcp -i $IP_ADDR_SERVER -p 12345 -t 30
 
 killall -9 sockperf
 
