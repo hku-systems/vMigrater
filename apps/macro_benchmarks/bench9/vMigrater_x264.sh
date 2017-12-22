@@ -7,7 +7,7 @@ while true; do
 	if [[ ! -z $process_id ]]; then
 		echo "x264 pid is $process_id"
 		processes=`ls /proc/$process_id/task/`
-		$VIPS_DIR/main $processes
+		$X264_DIR/main $processes
 	else
 		echo "x264 is not running!"
 	fi
