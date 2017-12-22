@@ -3,6 +3,7 @@
 VIPS=/home/kvm1/parsec-3.0/pkgs/apps/vips/inst/amd64-linux.gcc/bin/vips
 VIPS_INPUT=/home/kvm1/parsec-3.0/pkgs/apps/vips/inputs/orion_18000x18000.v
 VIPS_OUTPUT=/home/kvm1/parsec-3.0/pkgs/apps/vips/inputs/output.v
+FLUSH_DIR=/home/kvm1/vMigrater/tools
 
 echo "vCPU number: $1, Threads number: $2"
 

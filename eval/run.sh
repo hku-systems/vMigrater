@@ -29,6 +29,7 @@ MACRO3=$MACROBENCH_PATH/bench3/run.sh
 MACRO4=$MACROBENCH_PATH/bench4/run.sh
 MACRO5=$MACROBENCH_PATH/bench5/run.sh
 MACRO6=$MACROBENCH_PATH/bench6/run.sh
+MACRO9=$MACROBENCH_PATH/bench9/run.sh
 MACRO10=$MACROBENCH_PATH/bench10/run.sh
 MACRO11=$MACROBENCH_PATH/bench11/run.sh
 
@@ -167,6 +168,18 @@ function macrobench6() {
 	$MACRO6 $SCRIPTS $bench6_file $TOOLS
 }
 
+function macrobench9() {
+	macrobench_dir=$OUT_PATH/macrobench
+	if [ ! -d $macrobench_dir ]; then
+		mkdir $macrobench_dir
+	fi
+	bench9_file=$macrobench_dir/bench9
+	if [ ! -f $bench9_file ]; then
+		touch $bench9_file
+	fi
+	$MACRO9 $SCRIPTS $bench9_file $TOOLS
+}
+
 function macrobench10() {
 	macrobench_dir=$OUT_PATH/macrobench
 	if [ ! -d $macrobench_dir ]; then
@@ -221,7 +234,7 @@ else
 	elif [ "$1" == "8" ]; then
 		echo "TBD"
 	elif [ "$1" == "9" ]; then
-		echo "TBD"
+		macrobench9
 	elif [ "$1" == "10" ]; then
 		macrobench10
 	elif [ "$1" == "11" ]; then
