@@ -7,7 +7,11 @@ while true; do
 	if [[ ! -z $process_id ]]; then
 		echo "vips pid is $process_id"
 		processes=`ls /proc/$process_id/task/`
-		$VIPS_DIR/main $processes
+		process_nums=`echo "$processes" | wc -w`
+		echo "process number is $process_nums"
+		if [ "$process_nums" -gt "1" ]; then
+			$VIPS_DIR/main $processes
+		fi
 	else
 		echo "vips is not running!"
 	fi
