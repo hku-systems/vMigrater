@@ -25,7 +25,7 @@ int main(int argc, char **argv) {
 	int64_t i = 0;
 
 	uint64_t start = debug_time_monotonic_usec();
-	while (i != 10000000000) {
+	while (i != 1000000000) {
 		i = i + 1;
 	}
 	uint64_t diff = debug_time_monotonic_usec() - start;
