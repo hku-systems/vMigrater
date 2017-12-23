@@ -1,0 +1,18 @@
+Fix Kernel's bug about idle thread.
+
+
+Apply the patch to the pristine linux kernel 4.12.9 by:
+
+cd linux-4.12.9
+
+patch -p4 < ../patch_newidlethread.diff
+
+Enable new idle thread by:
+
+echo -n 1 > /proc/sys/kernel/cpuidle_busy_loop
+
+Disable new idle thread by:
+
+echo -n 0 > /proc/sys/kernel/cpuidle_busy_loop
+
+This work is done by senior fellow apprentice, Jianchen Shan.
