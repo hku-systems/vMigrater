@@ -14,7 +14,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include "../debug.h"
+#include "debug.h"
 #include <assert.h>
 #include <sys/sysinfo.h>
 
