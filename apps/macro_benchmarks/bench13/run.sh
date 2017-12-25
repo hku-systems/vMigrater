@@ -54,7 +54,7 @@ start_ts=$(($(date +%s%N)/1000))
 $BENCH13_DIR/caffe.sh 5 > /dev/null
 end_ts=$(($(date +%s%N)/1000))
 let diff_ts=$end_ts-$start_ts
-echo "Caffe, it needs $diff_ts microseconds"
+echo "Caffe, it needs $diff_ts microseconds" >> $2
 killall -9 main
 killall -9 vMigrater_caffe.sh
 
@@ -64,6 +64,6 @@ start_ts=$(($(date +%s%N)/1000))
 $BENCH13_DIR/caffe.sh 5 > /dev/null
 end_ts=$(($(date +%s%N)/1000))
 let diff_ts=$end_ts-$start_ts
-echo "Caffe, it needs $diff_ts microseconds"
+echo "Caffe, it needs $diff_ts microseconds" >> $2
 killall -9 main
 killall -9 vMigrater_caffe.sh

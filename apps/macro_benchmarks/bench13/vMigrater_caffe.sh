@@ -9,12 +9,14 @@ while true; do
 		#FIXME: hardcode waiting for caffe starting completely
 		sleep 1
 		processes=`ls /proc/$process_id/task/`
-		$BENCH13_DIR/main $proceses
+		$BENCH13_DIR/main $processes
 		#for entry in $processes
 		#do
 		#sudo taskset -pc $1 $entry > /dev/null
 		#done
 		#break
+	else
+		echo "caffe is not running"
 	fi
 done
 
