@@ -64,3 +64,32 @@ $BENCH9_DIR/vMigrater_x264.sh &
 $BENCH9_DIR/x264_2.sh 5 >> $2
 killall -9 main
 killall -9 vMigrater_x264.sh
+
+echo ">>>>>>>>>>>>>>>>>>>parsec dedup, dedicated" >> $2
+$3/flush
+$BENCH9_DIR/dedup2.sh 1 >> $2
+
+
+$3/flush
+$BENCH9_DIR/dedup2.sh 1 >> $2
+
+echo ">>>>>>>>>>>>>>>>>>>parsec dedup, shared" >> $2
+$3/flush
+$BENCH9_DIR/dedup2.sh 5 >> $2
+
+
+$3/flush
+$BENCH9_DIR/dedup2.sh 5 >> $2
+
+echo ">>>>>>>>>>>>>>>>>>>parsec dedup, shared with vMigrater" >> $2
+$3/flush
+$BENCH9_DIR/vMigrater_dedup.sh &
+$BENCH9_DIR/dedup2.sh 5 >> $2
+killall -9 main
+killall -9 vMigrater_dedup.sh
+
+$3/flush
+$BENCH9_DIR/vMigrater_dedup.sh &
+$BENCH9_DIR/dedup2.sh 5 >> $2
+killall -9 main
+killall -9 vMigrater_x264.sh
