@@ -5,7 +5,7 @@
 
 #this sccript should be executed in source machine which has
 #installed idle thread patch.
-DES_IP="192.168.122.96"
+DES_IP=$1
 #the kernel version among these machines should be based on Linux Kernel 4.7.4
 
 KERN_DIR=/usr/src/linux-4.7.4
