@@ -10,7 +10,7 @@ while true; do
 		processes=`ls /proc/$process_id/task/`
 		for entry in $processes
 		do
-			sudo taskset -pc $1 $entry > /dev/null
+			taskset -pc $1 $entry
 		done
 		break
 	fi
