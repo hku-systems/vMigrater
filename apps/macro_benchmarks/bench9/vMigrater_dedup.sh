@@ -2,6 +2,7 @@
 
 DEDUP_DIR=/home/kvm1/vMigrater/apps/macro_benchmarks/bench9
 
+#TODO: why dedup is not good for vMigrater
 while true; do
 	process_id=`/bin/ps -aux | grep "inst/amd64-linux.gcc/bin/dedup" | grep -v "grep" | grep -v "bash" | awk '{print $2}'`
 	if [[ ! -z $process_id ]]; then
