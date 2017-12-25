@@ -7,6 +7,7 @@ echo "vMigrater script dir is $1"
 echo "vMigrater results for macrobench 9 dir is $2"
 echo "vMigrater tools dir is $3"
 
+
 echo ">>>>>>>>>>>>>>>>>>>parsec vips, dedicated" > $2
 $3/flush
 $BENCH9_DIR/vips2.sh 1 >> $2
@@ -92,4 +93,4 @@ $3/flush
 $BENCH9_DIR/vMigrater_dedup.sh &
 $BENCH9_DIR/dedup2.sh 5 >> $2
 killall -9 main
-killall -9 vMigrater_x264.sh
+killall -9 vMigrater_dedup.sh
