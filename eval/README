@@ -18,3 +18,4 @@ TBD:
 3, blast
 4, tpch or tpcds
 5, parsec dedup
+6, pytorch
