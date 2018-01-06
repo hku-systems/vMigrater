@@ -3,10 +3,10 @@
 #if [ "$1" = "1" ]
 #then
 	# 1st run on shared vCPU
+./flush
 echo "zip, macrobench is on vCPU $1"
 #	./umount.sh
 #	./mount.sh
-#	./flush
 	
 start_ts=$(($(date +%s%N)/1000))
 /usr/bin/taskset -c $1 /usr/bin/zip -r linux_kernel.zip linux-4.14.3 > /dev/null

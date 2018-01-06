@@ -8,3 +8,4 @@ tags
 /bin/
 *.o
 *.out
+/apps/macro_benchmarks/bench1/zip/linux-4.14.3/

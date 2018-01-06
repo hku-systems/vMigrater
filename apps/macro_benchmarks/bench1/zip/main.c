@@ -76,7 +76,7 @@ uint64_t buf_flag = 0;
 
 //TODO: fix hardcoded
 static int start_vcpu = 2;
-static int end_vcpu = 8;
+static int end_vcpu = 6;
 
 //migration use
 int64_t num_vcpu_recipient = 0;
