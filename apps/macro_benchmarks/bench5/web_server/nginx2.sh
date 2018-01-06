@@ -7,7 +7,7 @@
 echo "nginx, this is on vCPU $1 with $2 clients/users"
 #FIXME: IP should be not the server IP
 IP_ADDR_SERVER=`ip addr | grep 'state UP' -A2 | tail -n1 | awk '{print $2}' | cut -f1  -d'/'`
-IP_ADDR_CLIENT="192.168.122.130"
+IP_ADDR_CLIENT="192.168.122.139"
 	#cd /home/kvm1/vMigrater/macro_benchmarks/bench3/sysbench
 	#./umount.sh
 	#./mount.sh

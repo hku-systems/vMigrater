@@ -76,7 +76,7 @@ uint64_t buf_flag = 0;
 
 //TODO: fix hardcoded
 static int start_vcpu = 2;
-static int end_vcpu = 6;
+static int end_vcpu = 8;
 
 //migration use
 int64_t num_vcpu_recipient = 0;
@@ -89,7 +89,7 @@ uint64_t period_start = 0;
 uint64_t period_flag = 0;
 
 //for low_threshold (in microseconds)
-int64_t low_threshold = 5000LL;
+int64_t low_threshold = 8000LL;
 int64_t low_threshold_minus = 0;
 int64_t low_threshold_middle = 0;
 int64_t low_threshold_plus = 0;
@@ -1157,14 +1157,15 @@ void dii_do_naive_migration(void) {
 	uint64_t i = 0;
 	uint64_t io_vn = 0;
 
-	for(i = 0; i < dii.counter; i++) {
+	//for(i = 0; i < dii.counter; i++) {
 		io_vn = get_pid_affinity(dii.io_pid);
-		if (vcpu[io_vn].left_time < low_threshold) {
+		//if (vcpu[io_vn].left_time < low_threshold) {
 			sort_vcpu();
-			if ((sv[0].io_vn != io_vn) && (sv[0].left_time > low_threshold))
+			//if ((sv[0].io_vn != io_vn) && (sv[0].left_time > low_threshold))
+			if ((sv[0].io_vn != io_vn))
 				set_pid_affinity(sv[0].io_vn, dii.io_pid);
-		}
-	}
+		//}
+	//}
 
 }
 #endif
@@ -1307,12 +1308,12 @@ void dii_naive_migrater(uint64_t vn) {
 	uint64_t i = 0;
 	uint64_t io_vn = 0;
 
-	for(i = 0; i < dii.counter; i++) {
+	//for(i = 0; i < dii.counter; i++) {
 		io_vn = get_pid_affinity(dii.io_pid);
 		//if ((io_vn != vn) && (vcpu[io_vn].left_time < low_threshold_curr))
 		if (io_vn != vn)
 			set_pid_affinity(vn, dii.io_pid);
-	}
+	//}
 }
 #endif
 
@@ -1552,8 +1553,8 @@ void init_cpu_thread(void) {
 	//if (sem_post(&sem_main) == -1) {
 	//	fprintf(stderr, "sem_post() failed\n");
 	//}
-	//usleep(400); //XXX: wait each monitor vCPU timeslice thread stable
-	//init_do_migrate_thread();
+	usleep(400); //XXX: wait each monitor vCPU timeslice thread stable
+	init_do_migrate_thread();
 }
 
 void *_thread_func(void *arg) {
