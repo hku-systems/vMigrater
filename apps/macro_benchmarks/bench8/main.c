@@ -1160,12 +1160,12 @@ void dii_do_naive_migration(void) {
 
 	for(i = 0; i < dii.counter; i++) {
 		io_vn = get_pid_affinity((dii.io_thread[i]).pid);
-		if (vcpu[io_vn].left_time < low_threshold_minus) {
+		//if (vcpu[io_vn].left_time < low_threshold_minus) {
 			sort_vcpu();
-			if ((sv[0].io_vn != io_vn) && (sv[0].left_time > low_threshold))
+			if ((sv[0].io_vn != io_vn) && (sv[0].left_time > vcpu[io_vn].left_time))
 				pid = (int) (dii.io_thread[i]).pid;
 				set_pid_affinity(sv[0].io_vn, pid);
-		}
+		//}
 	}
 
 }
@@ -1555,8 +1555,8 @@ void init_cpu_thread(void) {
 	//if (sem_post(&sem_main) == -1) {
 	//	fprintf(stderr, "sem_post() failed\n");
 	//}
-	//usleep(300); //XXX: wait each monitor vCPU timeslice thread stable
-	//init_do_migrate_thread();
+	usleep(300); //XXX: wait each monitor vCPU timeslice thread stable
+	init_do_migrate_thread();
 }
 
 void *_thread_func(void *arg) {
