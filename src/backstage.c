@@ -130,7 +130,7 @@ struct shared_mem {
 
 //FIXME: fix hardcoded
 static int start_vcpu = 1;
-static int end_vcpu = 7;
+static int end_vcpu = 9;
 
 static struct vcpu *vcpu;
 static struct _vcpu *_vcpu;

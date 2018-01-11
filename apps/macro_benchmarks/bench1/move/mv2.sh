@@ -1,6 +1,9 @@
 #!/bin/bash
 
 echo "move macrobench on $1"
+./umount.sh
+./mount.sh
+./flush
 
 if [ "$2" = "1" ]
 then

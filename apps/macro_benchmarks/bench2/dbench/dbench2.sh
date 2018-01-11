@@ -5,9 +5,9 @@
 	# 1st run on shared vCPU
 echo ""
 echo "dbench, macrobench2 is on vCPU $1"
-#	./umount.sh
-#	./mount.sh
-#	./flush
+./umount.sh
+./mount.sh
+./flush
 	
 /usr/bin/taskset -c $1 /usr/bin/dbench -c /usr/share/dbench/client.txt -D /home/kvm1/sda3/ -t 30 $2
 	#start_ts=$(($(date +%s%N)/1000))

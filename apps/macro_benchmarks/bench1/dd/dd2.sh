@@ -4,9 +4,9 @@
 #then
 #1st run on shared vCPU
 echo "dd macrobench on vCPU $1"
-#./umount.sh
-#./mount.sh
-#./flush
+./umount.sh
+./mount.sh
+./flush
 	
 start_ts=$(($(date +%s%N)/1000))
 /usr/bin/taskset -c $1 /bin/dd if=/home/kvm1/sda2/testA of=/home/kvm1/sda3/testA bs=4096 count=1000000 oflag=direct

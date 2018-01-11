@@ -76,7 +76,7 @@ uint64_t buf_flag = 0;
 
 //TODO: fix hardcoded
 static int start_vcpu = 2;
-static int end_vcpu = 8;
+static int end_vcpu = 10;
 
 //migration use
 int64_t num_vcpu_recipient = 0;
@@ -89,11 +89,11 @@ uint64_t period_start = 0;
 uint64_t period_flag = 0;
 
 //for low_threshold (in microseconds)
-int64_t low_threshold = 3000LL;
+int64_t low_threshold = 6000LL;
 int64_t low_threshold_minus = 0;
 int64_t low_threshold_middle = 0;
 int64_t low_threshold_plus = 0;
-int64_t low_threshold_curr = 9000LL;
+int64_t low_threshold_curr = 5000LL;
 uint64_t low_threshold_minus_performance = 0;
 uint64_t low_threshold_middle_performance = 0;
 uint64_t low_threshold_plus_performance = 0;
@@ -204,7 +204,7 @@ struct shared_mem {
 struct direct_input_io {
 	int counter;
 	int flag;
-	struct io io_thread[MAX_NUM_IO];
+	uint64_t io_pid;
 };
 
 static struct vcpu *vcpu;
@@ -225,6 +225,7 @@ uint64_t counter_affi = 0;
 uint64_t cost[10];
 uint64_t start_affi = 0;
 uint64_t diff_affi = 0;
+uint64_t last_biggest_vn = 0;
 
 //shared memory
 key_t key = 99996;
@@ -971,8 +972,8 @@ void tune_low_threshold(void) {
 void sort_vcpu(void) {
 	uint64_t i = 0;
 	uint64_t j = 0;
-	uint64_t tmp_vn;
-	int64_t tmp_lt;
+	uint64_t tmp_vn = 0;
+	int64_t tmp_lt = 0;
 
 	for (i = start_vcpu; i < end_vcpu; i++) {
 		sv[j].io_vn = i;
@@ -1154,19 +1155,19 @@ void do_naive_migration(void) {
 
 #if defined VMIGRATER_DIRECT_INPUT
 void dii_do_naive_migration(void) {
-	int pid = 0;
 	uint64_t i = 0;
 	uint64_t io_vn = 0;
 
-	for(i = 0; i < dii.counter; i++) {
-		io_vn = get_pid_affinity((dii.io_thread[i]).pid);
-		if (vcpu[io_vn].left_time < low_threshold) {
+	//for(i = 0; i < dii.counter; i++) {
+		io_vn = get_pid_affinity(dii.io_pid);
+		//if (vcpu[io_vn].left_time < low_threshold) {
 			sort_vcpu();
-			if ((sv[0].io_vn != io_vn) && (sv[0].left_time > 5000LL))
-				pid = (int) (dii.io_thread[i]).pid;
-				set_pid_affinity(sv[0].io_vn, pid);
-		}
-	}
+			//if ((sv[0].io_vn != io_vn))
+			if ((sv[0].io_vn != io_vn) && (sv[0].left_time > vcpu[io_vn].left_time) && (vcpu[io_vn].left_time < low_threshold))
+				set_pid_affinity(sv[0].io_vn, dii.io_pid);
+			//printf("Biggest vn is %lu, left time is %ld\n", sv[0].io_vn, sv[0].left_time);
+		//}
+	//}
 
 }
 #endif
@@ -1309,19 +1310,15 @@ void dii_naive_migrater(uint64_t vn) {
 	uint64_t i = 0;
 	uint64_t io_vn = 0;
 
-	for(i = 0; i < dii.counter; i++) {
-		if (getpgid((dii.io_thread[i]).pid) >= 0) {
-			io_vn = get_pid_affinity((dii.io_thread[i]).pid);
-			//if ((io_vn != vn) && (vcpu[io_vn].left_time < low_threshold_curr))
-			if (io_vn != vn)
-				set_pid_affinity(vn, (dii.io_thread[i]).pid);
-		} else {
-			dii.counter = dii.counter - 1;
-			if (dii.counter == 0) {
-				dii.flag = 0;
-			}
-		}
-	}
+	//for(i = 0; i < dii.counter; i++) {
+		io_vn = get_pid_affinity(dii.io_pid);
+		//if ((vcpu[io_vn].left_time < low_threshold_curr) && (io_vn != vn))
+		if (io_vn != vn)
+			set_pid_affinity(vn, dii.io_pid);
+			//if ((io_vn != vn))
+
+		//}
+	//}
 }
 #endif
 
@@ -1337,7 +1334,6 @@ void *thread_func(void *arg) {
 	set_nice_priority(-20, pid);
 	//set_priority();
 
-	uint64_t i = 0;
 	uint64_t io_vn = 0;
 	uint64_t _io_vn = 0;
 	uint64_t flag = 0;
@@ -1383,9 +1379,18 @@ void *thread_func(void *arg) {
 				do_migration();
 			}
 #else
-			if ((dii.flag == 1) && (dii.counter > 0)) {
-				dii_naive_migrater(vn);
+#if 1
+			if (getpgid(dii.io_pid) >= 0) {
+				if ((dii.flag == 1) && (dii.counter > 0)) {
+					dii_naive_migrater(vn);
+				}
+			} else {
+				dii.counter = dii.counter - 1;
+				if (dii.counter == 0) {
+					dii.flag = 0;
+				}
 			}
+#endif
 #endif
 #endif
 		} else {
@@ -1555,7 +1560,7 @@ void init_cpu_thread(void) {
 	//if (sem_post(&sem_main) == -1) {
 	//	fprintf(stderr, "sem_post() failed\n");
 	//}
-	usleep(600); //XXX: wait each monitor vCPU timeslice thread stable
+	usleep(300); //XXX: wait each monitor vCPU timeslice thread stable
 	init_do_migrate_thread();
 }
 
@@ -1726,38 +1731,6 @@ void sig_handler(int signo) {
 	exit(EXIT_SUCCESS);
 }
 
-#if defined VMIGRATER_DIRECT_INPUT
-void init_direct_io(int argc, char **argv) {
-	uint64_t i = 0;
-
-	dii.flag = 0;
-	dii.counter = 0;
-	for (i = 0; i < MAX_NUM_IO; i++) {
-		(dii.io_thread[i]).pid = 0;
-		(dii.io_thread[i]).is_movable = 0;
-		(dii.io_thread[i]).is_finished = 0;
-		(dii.io_thread[i]).index = 0;
-		(dii.io_thread[i]).prev_left_time = 0;
-		(dii.io_thread[i]).curr_left_time = 0;
-		(dii.io_thread[i]).prev_ts = 0;
-	}
-
-	printf("argc is %d\n", argc);
-	printf("argv[0] is %s\n", argv[0]);
-	printf("argv[1] is %s\n", argv[1]);
-	if (argc > 1) dii.flag = 1; //filter our argv[0]
-	for (i = 1; i < argc; i++) {
-		/*start from 0*/
-		(dii.io_thread[i - 1]).pid = (uint64_t) atoi(argv[i]);
-		dii.counter += 1;
-		printf("io pid %lu is %lu\n", (i - 1), (dii.io_thread[i - 1]).pid);
-	}
-
-	printf("dii's counter is %d, flag is %d\n", dii.counter, dii.flag);
-	return;
-}
-#endif
-
 
 int main(int argc, char **argv) {
 	pid_t pid = getpid();
@@ -1769,7 +1742,10 @@ int main(int argc, char **argv) {
 	printf("vCPU number is %lu\n", _vcpu_num);
 	printf("Process ID number is %d\n", pid);
 #if defined VMIGRATER_DIRECT_INPUT
-	init_direct_io(argc, argv);
+	dii.io_pid = (uint64_t) atoi(argv[1]);
+	dii.flag = 1;
+	dii.counter += 1;
+	printf("io_pid is %lu\n", dii.io_pid);
 #endif
 	//init_sem();
 	//init_register_task();

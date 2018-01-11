@@ -4,9 +4,9 @@
 #then
 	# 1st run on shared vCPU
 echo "tar, macrobench is on vCPU $1"
-#	./umount.sh
-#	./mount.sh
-#	./flush
+./umount.sh
+./mount.sh
+./flush
 	
 start_ts=$(($(date +%s%N)/1000))
 /usr/bin/taskset -c $1 /bin/tar -cvf linux_kernel.tar linux-4.14.3 > /dev/null

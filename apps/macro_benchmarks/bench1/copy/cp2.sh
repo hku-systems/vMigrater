@@ -5,9 +5,9 @@
 	# 1st run on shared vCPU
 
 echo "Copy macrobench on vCPU $1"
-#./umount.sh
-#./mount.sh
-#./flush
+./umount.sh
+./mount.sh
+./flush
 
 start_ts=$(($(date +%s%N)/1000))
 /usr/bin/taskset -c $1 /bin/cp /home/kvm1/sda2/testA /home/kvm1/sda3
