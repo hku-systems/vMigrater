@@ -3,16 +3,18 @@ We evaluate following standard benchmarks.
 bench 1: mv, copy, tar, zip, grep, dd, diff
 bench 2: dbench
 bench 3: sysbench
-bench 4: leveldb, mysql (sysbench OLTP)
+bench 4: leveldb+spark, mysql (sysbench OLTP)
 bench 5: nginx (web server application)
 bench 6: sockperf
-bench 7: hdfs+mapreduce
+bench 7: hdfs/hbase+mapreduce
 bench 8: parsec vips and x264
 bench 9: postmark
 bench 10: tpcc
+bench 11: mongoDB+spark
+bench 12: MediaTomb
 
 
-TBD:
+Extra efforts:
 1, caffe
 2, graph computing
 3, blast
