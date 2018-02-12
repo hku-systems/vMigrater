@@ -1,3 +1,3 @@
 vMigrater
 =========
-Migrate I/O Intensive Tasks in Virtualized Systems
+Migrate I/O Bound Tasks in Virtualized Systems
